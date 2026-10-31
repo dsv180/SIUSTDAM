@@ -305,6 +305,28 @@ export class StandaloneLLMRunner implements LLMRunner {
       baseURL: this.config.baseUrl,
       apiKey: this.config.apiKey,
       compatibility: "compatible",
+      // [pilot-patch] Служебные вызовы памяти идут без рассуждений:
+      // AITUNNEL docs (reasoning.md) — "reasoning": {"effort": "none"} реально
+      // выключает мышление. Без этого deepseek-v4.1-flash сжигает весь
+      // maxTokens на reasoning (замер: 1000/1000 токенов) и L2 падает
+      // (finish=length, пустой ответ / таймаут). Включается env
+      // TDAI_LLM_REASONING=none (задаётся в gateway.env).
+      ...(process.env.TDAI_LLM_REASONING === "none"
+        ? {
+            fetch: (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+              if (typeof init?.body === "string") {
+                try {
+                  const body = JSON.parse(init.body) as Record<string, unknown>;
+                  if (Array.isArray(body.messages)) body.reasoning = { effort: "none" };
+                  init = { ...init, body: JSON.stringify(body) };
+                } catch {
+                  /* тело не JSON — пропускаем как есть */
+                }
+              }
+              return fetch(input, init);
+            }) as typeof fetch,
+          }
+        : {}),
     });
 
     // Select tools based on mode + storage
@@ -348,6 +370,12 @@ export class StandaloneLLMRunner implements LLMRunner {
           : {}),
         maxOutputTokens: maxTokens,
         abortSignal: combinedSignal,
+        // [pilot-patch] пошаговая диагностика L2-цикла (временная, для пилота)
+        onStepFinish: (step: { stepNumber?: number; toolCalls?: unknown[]; text?: string; finishReason?: string }) => {
+          this.logger?.debug?.(
+            `${TAG} step-finish: #${step.stepNumber} toolCalls=${(step.toolCalls ?? []).length} text=${(step.text ?? "").length} finish=${step.finishReason}`,
+          );
+        },
         experimental_telemetry: {
           isEnabled: true,
           functionId: params.taskId,
