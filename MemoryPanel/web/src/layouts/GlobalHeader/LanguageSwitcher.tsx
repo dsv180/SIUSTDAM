@@ -1,10 +1,16 @@
 /**
- * LanguageSwitcher — 顶部语言切换器
+ * LanguageSwitcher — переключатель языка (zh-CN / en-US / ru-RU)
  */
 import { Dropdown, List } from 'tea-component';
 import { InternetIcon } from 'tea-icons-react';
 import { changeLanguage, getCurrentLanguage } from '@/i18n';
 import './language-switcher.css';
+
+const LANGS = [
+  { code: 'zh-CN', label: '中文' },
+  { code: 'en-US', label: 'English' },
+  { code: 'ru-RU', label: 'Русский' },
+];
 
 export function LanguageSwitcher() {
   const current = getCurrentLanguage();
@@ -16,24 +22,23 @@ export function LanguageSwitcher() {
       button={
         <button type="button" className="_memory-lang-switcher-btn" title="Language">
           <InternetIcon size={16} />
-          <span className="_memory-lang-switcher-label">{current === 'zh-CN' ? '中文' : 'English'}</span>
+          <span className="_memory-lang-switcher-label">
+            {LANGS.find((l) => l.code === current)?.label ?? 'English'}
+          </span>
         </button>
       }
     >
       {() => (
         <List type="option">
-          <List.Item
-            selected={current === 'zh-CN'}
-            onClick={() => { changeLanguage('zh-CN'); }}
-          >
-            中文
-          </List.Item>
-          <List.Item
-            selected={current === 'en-US'}
-            onClick={() => { changeLanguage('en-US'); }}
-          >
-            English
-          </List.Item>
+          {LANGS.map((l) => (
+            <List.Item
+              key={l.code}
+              selected={current === l.code}
+              onClick={() => { changeLanguage(l.code); }}
+            >
+              {l.label}
+            </List.Item>
+          ))}
         </List>
       )}
     </Dropdown>

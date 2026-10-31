@@ -9,18 +9,21 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { zhCN } from './zh-CN';
 import { enUS } from './en-US';
+import { ruRU } from './ru-RU';
 
 const STORAGE_KEY = 'tdai-memory.lang';
 
 function detectInitialLanguage(): string {
   try {
     const stored = globalThis.localStorage?.getItem(STORAGE_KEY);
-    if (stored === 'zh-CN' || stored === 'en-US') return stored;
+    if (stored === 'zh-CN' || stored === 'en-US' || stored === 'ru-RU') return stored;
   } catch {
     // Storage can be unavailable under browser privacy or sandbox policies.
   }
   const nav = (typeof navigator !== 'undefined' && navigator.language) || 'zh-CN';
-  return nav.startsWith('zh') ? 'zh-CN' : 'en-US';
+  if (nav.startsWith('zh')) return 'zh-CN';
+  if (nav.startsWith('ru')) return 'ru-RU';
+  return 'en-US';
 }
 
 export function changeLanguage(lang: string): void {
@@ -40,9 +43,10 @@ i18n.use(initReactI18next).init({
   resources: {
     'zh-CN': { translation: zhCN },
     'en-US': { translation: enUS },
+    'ru-RU': { translation: ruRU },
   },
   lng: detectInitialLanguage(),
-  fallbackLng: 'zh-CN',
+  fallbackLng: ['en-US', 'zh-CN'],
   interpolation: {
     escapeValue: false,
   },

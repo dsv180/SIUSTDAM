@@ -8,6 +8,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // [pilot-patch] Внутренняя сборка вендора предоставляет глобальный
+      // importModule(specifier); в опенсорс-версии его нет — обеспечиваем
+      // совместимость нативным динамическим импортом.
+      window.importModule = function (specifier) { return import(specifier); };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
