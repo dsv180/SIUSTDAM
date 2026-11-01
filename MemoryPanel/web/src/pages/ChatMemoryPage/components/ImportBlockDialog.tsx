@@ -92,7 +92,7 @@ export function ImportBlockDialog({
             <Alert type="warning">{t('importBlock.agent.noAgent')}</Alert>
           ) : (
             <Select size="full" value={scopeAgentId} onChange={setScopeAgentId}
-              options={agents.map((a) => ({ value: a.agent_id, text: `${a.name}（${a.agent_id}）` }))} />
+              options={agents.map((a) => ({ value: a.agent_id, text: `${a.name} (${a.agent_id})` }))} />
           )}
         </Form.Item>
       </Form>

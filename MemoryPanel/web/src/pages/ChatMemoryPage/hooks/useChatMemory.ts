@@ -40,7 +40,7 @@ export function useChatMemory(props: { activeTeamId?: string | null } = {}) {
   const [layerPages, setLayerPages] = useState<
     Record<string, Partial<Record<MemoryLayer, number>>>
   >({});
-  // 各层「当前时间窗口内」的总条数（key: `${blockId}|${layer}`）。
+  // 各层「当前时间窗口内」的总条数 (key: `${blockId}|${layer}`)。
   // layerCounts 存的是全量总数（选中块时 limit=1 拿到的）；带时间筛选（L0/L1）
   // 时 BFF 返回的 res.total 才是窗口内数量，分页必须用它，否则页数虚高。
   const [windowTotals, setWindowTotals] = useState<

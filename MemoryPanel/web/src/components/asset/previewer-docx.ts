@@ -9,8 +9,8 @@ import type { Previewer, PreviewContext, PreviewCleanup } from "./previewers";
 import { fitPagesToWidth } from "./docx-fit-pages";
 
 /**
- * 传给 docx-preview 的类名前缀。库据此生成 `${DOCX_CLASS}`（纸张）与
- * `${DOCX_CLASS}-wrapper`（外框）等选择器，并**运行时注入到渲染容器内**。
+ * 传给 docx-preview 的类名前缀。库据此生成 `${DOCX_CLASS}` (纸张)与
+ * `${DOCX_CLASS}-wrapper` (外框)等选择器，并**运行时注入到渲染容器内**。
  *
  * 关键：CSS 覆盖与注入样式改写都必须用这个常量拼选择器 —— 写死 `.docx-wrapper`
  * 会对不上（此前两次修复无效的根因就是选择器不匹配）。
