@@ -30,7 +30,7 @@ import {
 import type { Logger } from "../types.js";
 
 const TAG = "[memory-tdai] [recall]";
-const RECALL_TRUNCATION_SUFFIX = "…（已截断；可用 tdai_memory_search 或 tdai_conversation_search 查看详情）";
+const RECALL_TRUNCATION_SUFFIX = "…(усечено; подробнее — tdai_memory_search или tdai_conversation_search)";
 const MIN_TRUNCATED_RECALL_LINE_CHARS = 40;
 const RECALL_LINE_SEPARATOR = "\n";
 
@@ -39,18 +39,18 @@ const RECALL_LINE_SEPARATOR = "\n";
  * main agent knows how to actively retrieve deeper information.
  */
 const MEMORY_TOOLS_GUIDE = `<memory-tools-guide>
-## 记忆工具调用指南
+## Гайд по инструментам памяти
 
-当上方注入的记忆片段不足以回答用户问题时，可主动调用以下工具获取更多信息：
+Если впрыснутых выше фрагментов памяти недостаточно для ответа — самостоятельно вызывайте эти инструменты для получения дополнительной информации:
 
-- **tdai_memory_search**：搜索结构化记忆（L1），适用于回忆用户偏好、历史事件节点、规则等关键信息。
-- **tdai_conversation_search**：搜索原始对话（L0），适用于查找具体消息原文、时间线、上下文细节；也可用于补充或校验 memory_search 的结果。
-- **read_file**（Scene Navigation 中的路径）：当已定位到相关情境，且需要该场景的完整画像、事件经过或阶段结论时使用。
+- **tdai_memory_search**: поиск структурированной памяти (L1) — предпочтения пользователя, ключевые события, правила.
+- **tdai_conversation_search**: поиск по исходным диалогам (L0) — дословные формулировки, хронология, контекст; дополняет или перепроверяет memory_search.
+- **read_file** (путь из Scene Navigation): когда сцена уже найдена и нужна полная картина — ход событий, выводы по этапам.
 
-### ⚠️ 调用次数限制
-每轮对话中，tdai_memory_search 和 tdai_conversation_search **合计最多调用 3 次**。
-- 首次搜索无结果时，可换关键词或换工具重试，但总调用次数不要超过 3 次。
-- 若 3 次搜索后仍无结果，说明该信息不在记忆中，请直接根据已有信息回复用户，不要继续搜索。
+### ⚠️ Лимит вызовов
+За один тур tdai_memory_search и tdai_conversation_search — **суммарно не более 3 вызовов**.
+- Если первый поиск пуст — смените ключевые слова или инструмент, но суммарно не больше 3.
+- Если и после 3 поисков пусто — информации в памяти нет: отвечайте из имеющихся данных, не продолжайте поиск.
 </memory-tools-guide>`
 
 /** A single recalled L1 memory with its search score and type. */
@@ -191,7 +191,7 @@ async function performAutoRecallCore(params: {
 
     // Extract structured RecalledMemory from formatted lines for metric reporting
     recalledL1Memories = memoryLines.map((line, i) => {
-      const match = line.match(/^-\s+\[([^\]]+)\]\s+(.+?)(?:\s*\(活动时间:.*\))?$/);
+      const match = line.match(/^-\s+\[([^\]]+)\]\s+(.+?)(?:\s*\(время:.*\))?$/);
       if (match) {
         const tag = match[1];
         const content = match[2].trim();
@@ -278,7 +278,7 @@ async function performAutoRecallCore(params: {
   let prependContext: string | undefined;
   if (memoryLines.length > 0) {
     prependContext =
-      `<relevant-memories>\n以下是当前对话召回的相关记忆，不代表当前任务进程，仅作为参考：\n\n${memoryLines.join(RECALL_LINE_SEPARATOR)}\n</relevant-memories>`;
+      `<relevant-memories>\nНиже — воспоминания, найденные по текущему диалогу; это не описание текущей задачи, только справка:\n\n${memoryLines.join(RECALL_LINE_SEPARATOR)}\n</relevant-memories>`;
   }
 
   // Append memory tools usage guide to the stable part so the agent knows
@@ -409,7 +409,7 @@ async function searchMemoriesWithDetails(
   // Extract structured data from formatted memory lines.
   // Format: "- [type|scene] content (活动时间: ...)" or "- [type] content"
   const memories: RecalledMemory[] = result.lines.map((line, i) => {
-    const match = line.match(/^-\s+\[([^\]]+)\]\s+(.+?)(?:\s*\(活动时间:.*\))?$/);
+    const match = line.match(/^-\s+\[([^\]]+)\]\s+(.+?)(?:\s*\(время:.*\))?$/);
     if (match) {
       const tag = match[1];
       const content = match[2].trim();
@@ -834,17 +834,17 @@ function formatMemoryLine(m: FormatableMemory): string {
   const point = formatTimestamp(m.timestamp);
 
   if (start && end) {
-    // 段时间: both start and end
-    line += ` (活动时间: ${start} ~ ${end})`;
+    // диапазон: известны начало и конец
+    line += ` (время: ${start} ~ ${end})`;
   } else if (start) {
-    // 段时间: only start
-    line += ` (活动时间: ${start}起)`;
+    // диапазон: известно только начало
+    line += ` (время: с ${start})`;
   } else if (end) {
-    // 段时间: only end
-    line += ` (活动时间: 至${end})`;
+    // диапазон: известен только конец
+    line += ` (время: по ${end})`;
   } else if (point) {
-    // 点时间: single timestamp
-    line += ` (活动时间: ${point})`;
+    // точка: одиночный timestamp
+    line += ` (время: ${point})`;
   }
   // If all three are empty → no time info appended (graceful)
 
