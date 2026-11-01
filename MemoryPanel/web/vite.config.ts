@@ -30,6 +30,15 @@ export default defineConfig({
       '/v3': {
         target: SKILL_GATEWAY_TARGET,
         changeOrigin: true,
+        // [pilot-patch] Gateway с ключом (TDAI_GATEWAY_API_KEY из gateway.env):
+        // прокси подставляет Bearer — фронтенду панель пользователя ключ не нужен.
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            if (process.env.TDAI_GATEWAY_API_KEY) {
+              proxyReq.setHeader('authorization', `Bearer ${process.env.TDAI_GATEWAY_API_KEY}`);
+            }
+          });
+        },
       },
     },
   },
