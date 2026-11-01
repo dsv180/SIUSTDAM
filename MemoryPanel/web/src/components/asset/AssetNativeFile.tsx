@@ -64,7 +64,7 @@ export function AssetNativeFile({ base64, filename }: { base64: string; filename
   if (!url || failed) {
     return (
       <div className="_asset-native-file-fallback">
-        当前浏览器无法直接渲染此文件，请下载后用本地应用打开。
+        Этот браузер не умеет отображать файл напрямую — скачайте и откройте локальным приложением.
       </div>
     );
   }

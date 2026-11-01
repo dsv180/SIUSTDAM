@@ -204,8 +204,8 @@ export function ImportAndIngestModal({
     const nameEmpty = mdFilename.trim().length === 0;
     const contentEmpty = mdContent.trim().length === 0;
     if (nameEmpty && contentEmpty) return null; // 完全空 → 走重新抽取
-    if (nameEmpty) return t('wiki.detail.mdNameRequired', '请填写文件名（如 note.md）');
-    if (contentEmpty) return t('wiki.detail.mdContentRequired', '请填写 Markdown 内容');
+    if (nameEmpty) return t('wiki.detail.mdNameRequired', 'Заполните имя файла (например note.md)');
+    if (contentEmpty) return t('wiki.detail.mdContentRequired', 'Заполните Markdown-содержимое');
     return null;
   })();
 

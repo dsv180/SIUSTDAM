@@ -48,13 +48,13 @@ export function AssetOfficeFile({ base64, filename }: Props): JSX.Element {
 
     const id = previewerIdFor(filename);
     if (!id) {
-      setError(`该格式暂无前端预览器：${filename}`);
+      setError(`Для этого формата пока нет фронтенд-просмотрщика: ${filename}`);
       return;
     }
     const previewer = getPreviewer(id);
     if (!previewer) {
       // 注册表未命中：register-previewers 未导入？或 id 拼错
-      setError(`预览器未注册：${id}`);
+      setError(`Просмотрщик не зарегистрирован: ${id}`);
       return;
     }
 
@@ -83,7 +83,7 @@ export function AssetOfficeFile({ base64, filename }: Props): JSX.Element {
   }, [base64, filename]);
 
   if (error) {
-    return <div className="_asset-native-file-fallback">文档渲染失败：{error}</div>;
+    return <div className="_asset-native-file-fallback">Ошибка рендера документа: {error}</div>;
   }
   return <div className="_asset-office-file" ref={containerRef} />;
 }
