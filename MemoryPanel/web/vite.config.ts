@@ -47,7 +47,10 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        // [pilot-patch] относительный путь: на Windows с абсолютным input
+        // vite 6 падает «fileName or name ... must be strings that are neither
+        // absolute nor relative paths» при сборке.
+        main: 'index.html',
       },
     },
   },
