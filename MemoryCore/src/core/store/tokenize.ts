@@ -70,11 +70,42 @@ export const ZH_STOP_WORDS = new Set([
  * Example (fallback):
  *   "旅行计划 API" → '"旅行计划" OR "API"'
  */
+
+// ── Russian wordform support (query-side prefix expansion) ──
+// Russian morphology: "обновления/обновлении/обновлять" share the stem
+// "обновл". FTS5 unicode61 does not stem, so for Cyrillic tokens we add a
+// truncated prefix variant (`обновл*`) alongside the exact token. The index
+// side stores full words (unicode61), and FTS5 prefix matching bridges the
+// wordform gap without a custom tokenizer.
+
+const RU_MIN_TOKEN_LEN = 6;
+const RU_STEM_CUT = 2; // отрезать ~2 символа окончания
+
+function isCyrillicToken(t) {
+  return /[\u0400-\u04FF]/.test(t) && t.length >= RU_MIN_TOKEN_LEN;
+}
+
+function expandRussianPrefixes(tokens) {
+  const extra = [];
+  for (const t of tokens) {
+    if (!isCyrillicToken(t)) continue;
+    const stem = t.slice(0, t.length - RU_STEM_CUT);
+    if (stem.length >= 4) extra.push(stem + "*");
+  }
+  return [...new Set([...tokens, ...extra])];
+}
+
+const HAS_CJK = /[\u3400-\u4dbf\u4e00-\u9fff]/;
+
+function shouldUseJieba(raw) {
+  return getJieba() && HAS_CJK.test(raw);
+}
+
 export function buildFtsQuery(raw: string): string | null {
   const jieba = getJieba();
 
   let tokens: string[];
-  if (jieba) {
+  if (shouldUseJieba(raw)) {
     tokens = jieba
       .cutForSearch(raw, true)
       .map((t) => t.trim())
@@ -94,7 +125,10 @@ export function buildFtsQuery(raw: string): string | null {
   }
 
   if (tokens.length === 0) return null;
-  const quoted = tokens.map((t) => `"${t.replaceAll('"', "")}"`);
+  tokens = expandRussianPrefixes(tokens);
+  const quoted = tokens.map((t) =>
+    t.endsWith("*") ? t : `"${t.replaceAll('"', "")}"`,
+  );
   return quoted.join(" OR ");
 }
 
@@ -108,7 +142,7 @@ export function buildFtsQuery(raw: string): string | null {
  */
 export function extractQueryTokens(raw: string): string[] {
   const jieba = getJieba();
-  if (jieba) {
+  if (shouldUseJieba(raw)) {
     const tokens = jieba
       .cutForSearch(raw, true)
       .map((t) => t.trim())
@@ -120,12 +154,12 @@ export function extractQueryTokens(raw: string): string[] {
       });
     return [...new Set(tokens)];
   }
-  return (
+  const tokens =
     raw
       .match(/[\p{L}\p{N}_]+/gu)
       ?.map((t) => t.trim())
-      .filter(Boolean) ?? []
-  );
+      .filter(Boolean) ?? [];
+  return expandRussianPrefixes(tokens);
 }
 
 /**
