@@ -312,7 +312,7 @@ export function formatExtractionPrompt(params: {
     .map((m) => `[${m.id}] [${m.role}] [${new Date(m.timestamp).toISOString()}]: ${m.content}`)
     .join("\n\n");
 
-  return `**ЯЗЫК ВЫВОДА**: пиши  и  памяток на доминирующем языке реплик пользователя из блока \`scene_name\` 和 memory \`content\`。
+  return `**ЯЗЫК ВЫВОДА**: пиши `scene_name` и `content` памяток на доминирующем языке реплик пользователя из блока `Новые сообщения для извлечения`.
 
 【Предыдущая сцена】：${previousSceneName}
 
