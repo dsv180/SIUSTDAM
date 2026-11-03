@@ -8,12 +8,11 @@
 
 ---
 
-
 <div align="center">
 
 <img src="./assets/images/logo.png" alt="TencentDB Agent Memory" width="880" />
 
-### Agents remember. Humans innovate.
+### Агенты помнят. Люди творят.
 
 <a href="https://trendshift.io/repositories/29310?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-29310" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/29310" alt="TencentCloud%2FTencentDB-Agent-Memory | Trendshift" width="250" height="55"/></a>
 
@@ -24,7 +23,7 @@
 [![Hermes](https://img.shields.io/badge/Hermes-Gateway-7B61FF)](https://hermes-agent.nousresearch.com/docs/)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/dJQM6mKMF)
 
-[Installation](#installation) · [Supported Agents](#all-agents-share-the-same-memory-server) · [What is it?](#what-is-tencentdb-agent-memory) · [Team Play](#one-play-style-build-a-growing-agent-team-for-a-one-person-company) · [Technical Implementation](#technical-implementation) · [Benchmark](#benchmark) · [Roadmap](#roadmap)
+[Установка](#установка) · [Поддерживаемые агенты](#все-агенты-используют-один-сервер-памяти) · [Что это?](#что-такое-tencentdb-agent-memory) · [Командная игра](#один-стиль-игры-растим-команду-агентов-для-компании-одного-человека) · [Техническая реализация](#техническая-реализация) · [Бенчмарк](#бенчмарк) · [Дорожная карта](#дорожная-карта)
 
 [**Русский**](./README.md) · [English](./README_EN.md) · [简体中文](./README_CN.md)
 
@@ -32,39 +31,39 @@
 
 ---
 
-> **Latest:** Team Memory Beta is evolving quickly — install it and start exploring in minutes.
+> **Новое:** командная память (Team Memory Beta) развивается быстро — установите и начните исследовать за считанные минуты.
 
 <td>
    <video src="https://github.com/user-attachments/assets/efb1a808-1f86-4cfe-802c-f7453f7ca938" width="100%" controls autoplay loop muted playsinline></video>
 </td>
 
-# Installation
+# Установка
 
-Start all three services in one go (`memory-core` + `memory-hub` + `proxy`):
+Все три сервиса запускаются одной командой (`memory-core` + `memory-hub` + `proxy`):
 
 ```bash
 git clone https://github.com/TencentCloud/TencentDB-Agent-Memory.git
 cd TencentDB-Agent-Memory/deploy/global-images
 cp .env.example .env
-$EDITOR .env       # Fill in two sets of LLM parameters (memory group + proxy group)
-./start-all.sh     # Launch everything with one command; when finished, it prints a one-liner you can paste directly into Claude
+$EDITOR .env       # Заполните два набора параметров LLM (группа памяти + группа прокси)
+./start-all.sh     # Запускает всё одной командой; в конце печатает строку, которую можно вставить прямо в Claude
 ```
 
-Open the panel: [http://localhost:8125](http://localhost:8125).
+Панель открывается по адресу: [http://localhost:8125](http://localhost:8125).
 
-Complete installation documentation (standalone Memory Hub deployment, Proxy + Claude Code / CodeBuddy usage, stop and cleanup, port reference, etc.) is available in [**INSTALL.md**](./INSTALL.md) (中文: [INSTALL_CN.md](./INSTALL_CN.md)).
-The MongoDB storage backend is **experimental** (off by default); see
+Полная документация по установке (автономное развёртывание Memory Hub, использование Proxy с Claude Code / CodeBuddy, остановка и очистка, справочник портов и т.д.) — в [**INSTALL.md**](./INSTALL.md) (中文: [INSTALL_CN.md](./INSTALL_CN.md)).
+Бэкенд хранения MongoDB — **экспериментальный** (выключен по умолчанию); см.
 [INSTALL.md · MongoDB storage backend](./INSTALL.md#optional-mongodb-storage-backend-experimental-off-by-default).
 
-### Migrating data from an older version
+### Перенос данных со старой версии
 
-If you're already on an older release (v1.x / v0.x) and want to bring your existing data over to v2.0.0+, we provide a migration tool:
+Если вы уже на старом релизе (v1.x / v0.x) и хотите перенести существующие данные на v2.0.0+, предоставляется инструмент миграции:
 
-See [**Data Migration Tool (v2 → v3)**](./MemoryCore/scripts/migrate-v2-to-v3/README.md) for full usage and flags. New installations can skip this.
+См. [**Data Migration Tool (v2 → v3)**](./MemoryCore/scripts/migrate-v2-to-v3/README.md) — полное описание использования и флагов. Новые установки могут этот шаг пропустить.
 
-## All Agents Share the Same Memory Server
+## Все агенты используют один сервер памяти
 
-One Proxy, unchanged protocol, zero-code integration — point the Agent's base URL to the Proxy and it's done. No plugin, hook, or MCP server is required.
+Один прокси, неизменный протокол, интеграция без кода — достаточно направить базовый URL агента на прокси, и готово. Не нужны ни плагин, ни хук, ни MCP-сервер.
 
 <table>
 <tr>
@@ -77,276 +76,276 @@ One Proxy, unchanged protocol, zero-code integration — point the Agent's base 
 <td align="center" width="140"><a href="./INSTALL.md#using-proxy-with-workbuddy"><img src="./assets/images/agents/workbuddy.png" width="48" height="48" /><br /><sub><b>WorkBuddy</b></sub></a></td>
 <td align="center" width="140"><a href="./INSTALL.md#using-proxy-with-hermes"><img src="./assets/images/agents/hermes.png" width="48" height="48" /><br /><sub><b>Hermes</b></sub></a></td>
 <td align="center" width="140"><a href="./INSTALL.md#using-proxy-with-openclaw"><img src="./assets/images/agents/openclaw.png" width="48" height="48" /><br /><sub><b>OpenClaw</b></sub></a></td>
-<td align="center" width="140"><a href="./INSTALL.md#using-proxy-with-other-platforms-generic"><sub><b>More frameworks coming soon...</b></sub></a></td>
+<td align="center" width="140"><a href="./INSTALL.md#using-proxy-with-other-platforms-generic"><sub><b>Ещё фреймворки — скоро…</b></sub></a></td>
 </tr>
 </table>
 
-See [**INSTALL.md**](./INSTALL.md) for the exact configuration steps of each client.
+Точные шаги настройки каждого клиента — в [**INSTALL.md**](./INSTALL.md).
 
-Don't see your favorite Agent? You can try adapting it yourself with the [Generic integration guide](./INSTALL.md#using-proxy-with-other-platforms-generic) — and we'd love a PR adding native support for it. See [**CONTRIBUTING.md**](./CONTRIBUTING.md) to get started.
+Не нашли своего любимого агента? Попробуйте адаптировать его сами по [универсальному гайду интеграции](./INSTALL.md#using-proxy-with-other-platforms-generic) — и мы будем рады PR с нативной поддержкой. С чего начать — см. [**CONTRIBUTING.md**](./CONTRIBUTING.md).
 
-# What is TencentDB Agent Memory?
+# Что такое TencentDB Agent Memory?
 
-We started from a practical question: **How do you reduce repetitive work when using Agents?**
+Мы начали с практического вопроса: **как сократить повторяющуюся работу при использовании агентов?**
 
-If project context has already been explained, it shouldn't need to be repeated in a new session. If documents have already been read, every Agent shouldn't have to start again from page one. A workflow that already works shouldn't have to be rediscovered next time.
+Если контекст проекта уже был объяснён, не нужно повторять его в новой сессии. Если документы уже прочитаны, каждому агенту не нужно начинать с первой страницы. Рабочий процесс, который уже работает, не нужно заново изобретать в следующий раз.
 
-Memory here means more than just "remembering conversations." **Any information that helps the next Agent avoid reinventing the wheel should be saved, organized, and reused.**
+Память здесь — больше, чем «запоминание разговоров». **Любая информация, которая помогает следующему агенту не изобретать велосипед, должна быть сохранена, организована и переиспользована.**
 
 ```text
-Existing information → Reusable memory assets → Fewer turns → Less rework → More stable results and higher efficiency
+Существующая информация → Переиспользуемые активы памяти → Меньше ходов → Меньше переделок → Стабильнее результаты и выше эффективность
 ```
 
-### Let experience accumulate, flow, and pass on to the next Agent
+### Накопленный опыт передаётся следующему агенту
 
-**Memory Hub** for Agent teams closes the loop across the entire experience lifecycle: work produces assets, assets circulate through the team, and new members can load the team's save file on day one.
+**Memory Hub** для команд агентов замыкает цикл всего жизненного пути опыта: работа создаёт активы, активы циркулируют по команде, а новые участники в первый же день загружают «сейв» команды.
 
-1. **Automatic asset extraction**: Extract Chat Memory and Skills from conversations and tasks; convert documents and code into Wiki and CodeGraph; then manage, review, and route them consistently.
-2. **Portable & multi-Agent compatible**: Memory assets are decoupled from Agent frameworks — they can move across frameworks and be shared and maintained by multiple Agents and team members.
-3. **Cold-start friendly**: Import existing documents, codebases, and Agent conversation sessions. New Agent teams can start from existing experience instead of learning from scratch.
+1. **Автоматическое извлечение активов**: Chat Memory и скиллы извлекаются из диалогов и задач; документы и код превращаются в Wiki и CodeGraph; затем всем этим управляют, проверяют и маршрутизируют единообразно.
+2. **Переносимость и совместимость с несколькими агентами**: активы памяти отвязаны от фреймворков агентов — они могут переезжать между фреймворками и использоваться совместно несколькими агентами и участниками команды.
+3. **Дружелюбие к холодному старту**: импортируйте существующие документы, кодовые базы и сессии диалогов агентов. Новая команда агентов стартует с уже накопленного опыта, а не учится с нуля.
 
-### 🧠 A brain that remembers people and context
+### 🧠 Мозг, который помнит людей и контекст
 
-- **Chat Memory** retains preferences, facts, decisions, and interaction history.
-- Each Agent automatically gets its own memory when created — no need to re-introduce yourself next time.
-- L0 Conversation → L1 Atom → L2 Scenario → L3 Persona — raw conversations are distilled layer by layer.
+- **Chat Memory** хранит предпочтения, факты, решения и историю взаимодействий.
+- Каждый агент при создании автоматически получает свою память — не нужно в следующий раз представляться заново.
+- L0 Диалог → L1 Атом → L2 Сценарий → L3 Персона — сырые разговоры дистиллируются слой за слоем.
 
 <img width="" src="assets/images/chat_memory.png" alt="image.png" />
 
-> "Don't refactor the old auth module — mobile is still using it." — Context this costly shouldn't depend on humans repeating it every time.
+> «Не рефактори старый модуль авторизации — мобильное приложение его ещё использует». — Такой дорогой контекст не должен зависеть от того, повторят ли его люди в очередной раз.
 
-### ⚡ A Skill library that accumulates expertise
+### ⚡ Библиотека скиллов, накапливающая экспертизу
 
-- After completing complex work, Agents can extract and manage reusable Skills from conversations and tool calls, and import them into the context of a designated Agent when needed.
-- A Skill isn't just a prompt snippet; it has versions, resource files, trigger boundaries, execution steps, and validation rules.
-- Personal Skills are private by default; after review, they can be shared with the team and assigned to other Agents.
+- Завершив сложную работу, агенты могут извлекать и управлять переиспользуемыми скиллами из диалогов и вызовов инструментов, а затем подключать их в контекст назначенного агента по мере надобности.
+- Скилл — это не просто кусок промпта: у него есть версии, файлы-ресурсы, границы срабатывания, шаги исполнения и правила проверки.
+- Личные скиллы по умолчанию приватны; после проверки их можно открыть команде и назначить другим агентам.
 
 <img width="" src="assets/images/skill.png" alt="image.png" />
 
-> Troubleshooting, code review, release checklists — learn it once, and the whole team can use it.
+> Разбор инцидентов, ревью кода, чек-листы релизов — выучите один раз, и пользоваться сможет вся команда.
 
-### 📖 A knowledge map that reads both docs and code
+### 📖 Карта знаний, читающая и документы, и код
 
-- **Wiki** turns product docs, design specs, and ops runbooks into structured pages with a link graph. (Inspired by Karpathy's LLM knowledge base.)
+- **Wiki** превращает продуктовую документацию, дизайн-спеки и эксплуатационные регламенты в структурированные страницы с графом ссылок. (Вдохновлено LLM-базой знаний Карпаты.)
 
 <img src="./assets/images/wiki.png" alt="image.png" />
 
-- **CodeGraph** indexes code symbols, files, call relationships, and impact paths.
+- **CodeGraph** индексирует символы кода, файлы, связи вызовов и пути влияния.
 <img width="" src="assets/images/codegraph.png" alt="image.png" />
 
-- Agents can search, read, inspect callers/callees, and perform impact analysis before modifying code.
+- Агенты могут искать, читать, проверять вызывающих/вызываемых и проводить анализ влияния до изменения кода.
 
-> Wiki keeps Agents from reading every file list before getting to work. CodeGraph doesn't just tell them "the code is here" — it tells them "changing this might affect those."
+> Wiki избавляет агентов от необходимости читать все списки файлов перед началом работы. CodeGraph не просто говорит «код здесь» — он говорит: «изменишь это — может пострадать вот это».
 
-### 🛡️ A team memory panel controlled by humans
+### 🛡️ Панель командной памяти под контролем человека
 
-- Create teams and Agents in Memory Hub; review, share, and equip memory assets.
-- Manage ownership, versions, status, visibility, usage counts, and Agent bindings in one place.
-- `private` belongs strictly to the Owner; `team` is visible to all team members; `restricted` grants precise access via User / Role / Agent ACLs.
-- Two role layers: **global System Admin** manages users and teams (creating teams, adding members) and can also use Wiki, CodeGraph, Skill, and other asset management features; **Team-level roles** include Admin (team manager) and Member (regular member), responsible for asset collaboration and access control within a team. Asset ownership is tracked via Owner — the Owner automatically has management permissions for their assets.
+- Создавайте команды и агентов в Memory Hub; проверяйте, открывайте доступ и оснащайте активами памяти.
+- Управляйте владельцем, версиями, статусом, видимостью, счётчиками использования и привязками агентов в одном месте.
+- `private` — строго принадлежит владельцу; `team` — видно всем участникам команды; `restricted` — точечный доступ через ACL по пользователям / ролям / агентам.
+- Два уровня ролей: **глобальный системный администратор** управляет пользователями и командами (создание команд, добавление участников) и тоже может пользоваться Wiki, CodeGraph, скиллами и прочими активами; **роли уровня команды** — админ (управляющий командой) и участник, отвечающие за совместную работу с активами и контроль доступа внутри команды. Принадлежность актива отслеживается через владельца — владелец автоматически имеет права управления своими активами.
 
 <img width="" src="assets/images/asset.png" alt="image.png" />
 
 
-## Cold Start: Load the Save File, Then Get to Work
+## Холодный старт: загрузи сейв — и за работу
 
-Most Agents' first task is re-learning your project. TencentDB Agent Memory turns the learning cost you've already paid into a save file:
+Первой задачей большинства агентов является повторное изучение вашего проекта. TencentDB Agent Memory превращает уже оплаченную вами цену обучения в файл сохранения:
 
-<img alt="Cold Start: import codebase, docs, and history into Memory Hub" src="assets/images/flowchart3.png" />
+<img alt="Холодный старт: импорт кодовой базы, документов и истории в Memory Hub" src="assets/images/flowchart3.png" />
 
-Specifically, these existing assets can be imported directly and processed automatically in the panel:
+Конкретно, эти существующие активы можно импортировать напрямую и обработать автоматически в панели:
 
-- **Codebases**: Import existing repositories — **CodeGraph** automatically indexes symbols, files, call relationships, and impact paths.
-- **Documents & files**: Import relevant docs and files — **Wiki** automatically generates structured pages with a link graph.
-- **Conversation sessions**: Import past Agent conversation sessions — **Skills and Chat Memory** are automatically extracted as reusable assets.
+- **Кодовые базы**: импортируйте существующие репозитории — **CodeGraph** автоматически индексирует символы, файлы, связи вызовов и пути влияния.
+- **Документы и файлы**: импортируйте нужные документы и файлы — **Wiki** автоматически строит структурированные страницы с графом ссылок.
+- **Сессии диалогов**: импортируйте прошлые сессии диалогов агентов — **скиллы и Chat Memory** автоматически извлекаются как переиспользуемые активы.
 
-> Stop retraining every Agent. Give it the save file.
+> Хватит переобучать каждого агента. Дайте ему сейв.
 
-## One Play Style: Build a Growing Agent Team for a One-Person Company
+## Один стиль игры: растим команду агентов для компании одного человека
 
-Open Memory Hub and create a team:
-
-```text
-Tiny but Serious Inc.
-├── 👤 You · Set goals / Make decisions
-├── 🔭 Scout · Research / Find opportunities
-├── 🛠 Builder · Write code / Build products
-├── 🧪 Reviewer · Test / Find issues
-└── 🧠 Agent Memory · Preserve the team's experience
-```
-
-You're not opening four disconnected chat windows — you're assembling a squad with different roles that can inherit the team's accumulated experience.
-
-### Recruit first, then equip
+Откройте Memory Hub и создайте команду:
 
 ```text
-🔭 Scout
-   ├── User interview Chat Memory
-   ├── Market research Wiki
-   └── Competitive analysis Skill
-
-🛠 Builder
-   ├── Product Wiki
-   ├── Project CodeGraph
-   └── Feature Delivery Skill
-
-🧪 Reviewer
-   ├── Historical incident Chat Memory
-   ├── Project CodeGraph
-   └── Release Checklist Skill
+ООО «Маленькое, да Серьёзное»
+├── 👤 Вы · Ставите цели / принимаете решения
+├── 🔭 Разведчик · Исследования / поиск возможностей
+├── 🛠 Строитель · Пишет код / делает продукт
+├── 🧪 Ревизор · Тестирует / находит проблемы
+└── 🧠 Память агента · Хранит опыт команды
 ```
 
-Different roles, different loadouts. Less noise — give each Agent the memory assets it actually needs to get work done.
+Вы открываете не четыре отдельных окна чата — вы собираете отряд с разными ролями, способный унаследовать накопленный опыт команды.
 
-**The company can be tiny. Experience can compound forever.**
+### Сначала нанимай, потом вооружай
 
-## Memory Assets, Not a Chat Log Warehouse
+```text
+🔭 Разведчик
+   ├── Chat Memory интервью с пользователями
+   ├── Wiki маркетинговых исследований
+   └── Скилл конкурентного анализа
 
-RAG answers "what can be found?" Team Memory also answers "who can use it, which version is valid, and which Agent should receive it."
+🛠 Строитель
+   ├── Wiki продукта
+   ├── CodeGraph проекта
+   └── Скилл поставки фич
 
-| | Chat History | Standard RAG | TencentDB Agent Memory |
+🧪 Ревизор
+   ├── Chat Memory исторических инцидентов
+   ├── CodeGraph проекта
+   └── Скилл чек-листа релиза
+```
+
+Роли разные — снаряжение разное. Меньше шума: дайте каждому агенту именно те активы памяти, которые нужны ему для работы.
+
+**Компания может быть крошечной. Опыт может накапливаться вечно.**
+
+## Активы памяти, а не склад логов чатов
+
+RAG отвечает на вопрос «что можно найти?». Командная память отвечает ещё и на вопросы «кто может этим пользоваться, какая версия актуальна и какому агенту это выдать».
+
+| | История чатов | Обычный RAG | TencentDB Agent Memory |
 | :--- | :---: | :---: | :---: |
-| Cross-session user understanding | △ | △ | ✅ Chat Memory |
-| Distilled executable experience | — | — | ✅ Skill |
-| Document structure & relationships | — | △ Chunk retrieval | ✅ Wiki + Link Graph |
-| Code call graphs & impact scope | — | △ Text match | ✅ CodeGraph |
-| Ownership / Version / Status | — | — | ✅ |
-| Team sharing & Agent loadout | — | — | ✅ |
-| Private / Team / ACL | — | △ | ✅ |
+| Межсессовое понимание пользователя | △ | △ | ✅ Chat Memory |
+| Дистиллированный исполняемый опыт | — | — | ✅ Скилл |
+| Структура и связи документов | — | △ Поиск фрагментов | ✅ Wiki + граф ссылок |
+| Графы вызовов кода и охват влияния | — | △ Текстовый поиск | ✅ CodeGraph |
+| Владелец / версия / статус | — | — | ✅ |
+| Командный доступ и снаряжение агентов | — | — | ✅ |
+| Приватное / командное / ACL | — | △ | ✅ |
 
-## Memory Hub Is Not a Display Board — It's a Control Panel
+## Memory Hub — не витрина, а пульт управления
 
-| Play Style | What you do in the Hub |
+| Стиль игры | Что вы делаете в хабе |
 | :--- | :--- |
-| **Team Up** | Create teams, add people and Agents, define sharing boundaries |
-| **Asset Library** | Browse, search, review, and manage Chat Memory, Skills, Wiki, and CodeGraph |
-| **Agent Loadout** | Bind different memory assets to different Agents; adjust priority and usage mode |
-| **Knowledge Workshop** | Build Wiki and CodeGraph; monitor processing status and asset metadata |
-| **Access Control** | Switch between private, team, and ACL-based access; revoke sharing when needed |
+| **Собрать команду** | Создавайте команды, добавляйте людей и агентов, задавайте границы обмена |
+| **Библиотека активов** | Просматривайте, ищите, проверяйте и управляйте Chat Memory, скиллами, Wiki и CodeGraph |
+| **Снаряжение агентов** | Привязывайте разные активы памяти к разным агентам; настраивайте приоритеты и режимы использования |
+| **Мастерская знаний** | Стройте Wiki и CodeGraph; следите за статусом обработки и метаданными активов |
+| **Контроль доступа** | Переключайте приватный, командный и ACL-доступ; отзывайте доступ, когда нужно |
 
-When you open an asset, what matters is not just "what it says," but also "where it came from, which version it is, who it's assigned to, and whether it's been used recently."
+Когда вы открываете актив, важно не только «что в нём написано», но и «откуда он, какая это версия, кому назначен и использовался ли он недавно».
 
-## Every Loop Gains Experience
+## Каждый цикл накапливает опыт
 
-<img alt="Every Loop Gains Experience: continuous accumulation, making every use smarter" src="assets/images/flowchart4.png" />
+<img alt="Каждый цикл накапливает опыт: непрерывное накопление делает каждое использование умнее" src="assets/images/flowchart4.png" />
 
-Memory doesn't run the Agent loop; it ensures the next iteration inherits the previous one's results: valuable interactions stay in Chat Memory, proven workflows are distilled into Skills, and document/code changes are updated through Wiki ingest and CodeGraph sync.
+Память не управляет циклом агента — она гарантирует, что следующая итерация унаследует результаты предыдущей: ценные взаимодействия остаются в Chat Memory, проверенные процессы дистиллируются в скиллы, изменения документов и кода обновляются через индексацию Wiki и синхронизацию CodeGraph.
 
-**Without Memory, loops may just repeat faster. With inherited memory, each iteration has the chance to be better than the last.**
+**Без памяти циклы могут просто повторяться быстрее. С наследуемой памятью у каждой итерации есть шанс стать лучше предыдущей.**
 
-## One Agent Team: Shared Experience, Not Shared Privacy
+## Команда агентов: общий опыт, а не общая приватность
 
-New Chat Memory and Skills are private by default. Sharing is an explicit action, not a default leak.
+Новые Chat Memory и скиллы по умолчанию приватны. Открытие доступа — явное действие, а не утечка по умолчанию.
 
-| Visibility | Semantics |
+| Видимость | Семантика |
 | :--- | :--- |
-| `private` | Only the Owner can read — not even team admins |
-| `team` | Team members can read; the Owner / Admin can manage |
-| `restricted` | Precise access via User / Role / Agent ACL |
-| `agent` | For targeted equipping of Agents within the same team |
+| `private` | Читать может только владелец — даже админам команды недоступно |
+| `team` | Участники команды могут читать; управлять — владелец / админ |
+| `restricted` | Точечный доступ через ACL: пользователи / роли / агенты |
+| `agent` | Для адресного снаряжения агентов внутри одной команды |
 
-You can assign the "Release Skill" to the Release Agent, the "Architecture Wiki" to all development Agents, and CodeGraph to Coder and Reviewer.
+Можно назначить «скилл релиза» релизному агенту, «Wiki архитектуры» — всем агентам разработки, а CodeGraph — кодеру и ревизору.
 
-## Technical Implementation
+## Техническая реализация
 
-TencentDB Agent Memory doesn't aim to "store everything." It solves three problems: **what's worth keeping, who can use it, and how to retrieve less while retrieving the right things next time.**
+TencentDB Agent Memory не стремится «хранить всё». Он решает три задачи: **что стоит сохранить, кто может этим пользоваться и как в следующий раз искать меньше, находя нужное.**
 
-<img alt="Technical overview: layering (L0–L3), Memory Assets, Memory Hub, identity-based assembly for Agents" src="assets/images/flowchart5.png" />
+<img alt="Технический обзор: слои (L0–L3), активы памяти, Memory Hub, сборка контекста агента по личности" src="assets/images/flowchart5.png" />
 
-### 1. Memory isn't flat records — it grows in layers
+### 1. Память — не плоские записи, она растёт слоями
 
-Conversations are first saved as L0, then refined by an async pipeline into multiple levels of granularity:
+Диалоги сначала сохраняются как L0, затем асинхронный конвейер доводит их до нескольких уровней детализации:
 
-| Layer | What it stores | Primary use |
+| Слой | Что хранит | Основное применение |
 | :--- | :--- | :--- |
-| **L0 Conversation** | Raw conversations with full context | Verify exact wording, timestamps, and sources |
-| **L1 Atom** | Facts, preferences, constraints, and events extracted from conversations | Precise recall of actionable information |
-| **L2 Scenario** | Knowledge blocks organized around projects or scenarios | Quickly restore a working context |
-| **L3 Core / Persona** | Long-term profiles, stable patterns, and high-level cognition | Let Agents rapidly enter a user's and team's context |
+| **L0 Диалог** | Сырые разговоры с полным контекстом | Проверка точных формулировок, временных меток и источников |
+| **L1 Атом** | Факты, предпочтения, ограничения и события, извлечённые из разговоров | Точное воспоминание полезной информации |
+| **L2 Сценарий** | Блоки знаний, собранные вокруг проектов или сцен | Быстрое восстановление рабочего контекста |
+| **L3 Ядро / Персона** | Долгосрочные профили, устойчивые паттерны, ключевые выводы | Быстрое погружение агентов в контекст пользователя и команды |
 
-Both generation and retrieval are layered: normally, L2/L3 provide a quick context bootstrap; when specific facts are needed, BM25 + vector retrieval + RRF fall back to L1/L0. Results are further capped by item count, character budget, and timeout limits to prevent memory from overwhelming the context window.
+И генерация, и извлечение слоисты: обычно L2/L3 дают быстрый старт контекста; когда нужны конкретные факты, BM25 + векторный поиск + RRF спускаются к L1/L0. Результаты дополнительно ограничиваются числом записей, бюджетом символов и тайм-аутами, чтобы память не переполняла контекстное окно.
 
-### 2. Memory isn't a global prompt — it's the Agent's loadout
+### 2. Память — не глобальный промпт, это снаряжение агента
 
-Chat Memory, Skills, Wiki, and CodeGraph are all registered uniformly as Memory Assets. Memory Hub uses **Fixed Binding + ACL** to determine which assets a given Agent can use: first narrow the permission scope by Team, User, Agent, and visibility, then retrieve based on the current query.
+Chat Memory, скиллы, Wiki и CodeGraph регистрируются единообразно как активы памяти. Memory Hub через **фиксированную привязку + ACL** определяет, какими активами данный агент может пользоваться: сначала сужается круг разрешений по команде, пользователю, агенту и видимости, затем поиск выполняется по текущему запросу.
 
-This lets teams share experience without exposing all their private information; switching Agents or frameworks only requires re-equipping, not retraining.
+Это позволяет командам обмениваться опытом, не раскрывая всю приватную информацию; смена агента или фреймворка требует только перевооружения, а не переобучения.
 
-### 3. Knowledge isn't injected wholesale — it's called on demand
+### 3. Знания не впрыскиваются целиком — они вызываются по требованию
 
-Documents are organized into searchable Wiki pages that support link-graph drill-down; codebases are indexed into CodeGraph assets containing files, symbols, and call relationships. Agents first discover capabilities via `/v3/tools/list`, then use `/v3/tools/call` to read relevant pages, source code, or impact paths.
+Документы организуются в страницы Wiki с поиском и drilled-down по графу ссылок; кодовые базы индексируются в активы CodeGraph с файлами, символами и связями вызовов. Агенты сначала обнаруживают возможности через `/v3/tools/list`, затем через `/v3/tools/call` читают нужные страницы, исходный код или пути влияния.
 
-This makes documents and code part of memory as well — but they remain available tools that only enter context when truly needed.
+Так документы и код тоже становятся частью памяти — но остаются доступными инструментами, которые входят в контекст только когда действительно нужны.
 
-## Benchmark
+## Бенчмарк
 
-| Benchmark | Without TencentDB Agent Memory | With it enabled | Relative improvement |
+| Бенчмарк | Без TencentDB Agent Memory | С ним включённым | Относительное улучшение |
 | :--- | :---: | :---: | :---: |
 | **PersonaMem** | 48% | **76%** | **+59%** |
 
-PersonaMem tests whether an Agent can correctly understand and apply user information after extended interactions.
+PersonaMem проверяет, способен ли агент корректно понять и применить информацию о пользователе после длительных взаимодействий.
 
-## Notes
+## Примечания
 
-- Wiki and CodeGraph are built asynchronously; allow some processing time before they reach `ready` status.
-- CodeGraph currently prioritizes public HTTPS repositories; support for private repositories and SSH credentials is still being refined.
-- The Hub supports manual asset binding; fully automated memory routing is still under iteration.
+- Wiki и CodeGraph строятся асинхронно; дайте им время на обработку, прежде чем они получат статус `ready`.
+- CodeGraph сейчас приоритизирует публичные HTTPS-репозитории; поддержка приватных репозиториев и SSH-ключей дорабатывается.
+- Хаб поддерживает ручную привязку активов; полностью автоматическая маршрутизация памяти ещё в итерациях.
 
-## Related Documentation
+## Связанная документация
 
-- [Roadmap](./ROADMAP.md) (what we're building next)
-- [Full Installation Guide](./INSTALL.md) (Memory Core + Hub + Proxy one-click deployment)
-- [Roadmap](./ROADMAP.md) (what we're building next; 中文: [ROADMAP_CN.md](./ROADMAP_CN.md))
-- [Data Migration Tool (v2 → v3)](./MemoryCore/scripts/migrate-v2-to-v3/README.md) (if you're on an older release and want to migrate existing data)
+- [Дорожная карта](./ROADMAP.md) (что делаем дальше)
+- [Полное руководство по установке](./INSTALL.md) (Memory Core + Hub + Proxy в одно касание)
+- [Дорожная карта](./ROADMAP.md) (что делаем дальше; 中文: [ROADMAP_CN.md](./ROADMAP_CN.md))
+- [Инструмент миграции данных (v2 → v3)](./MemoryCore/scripts/migrate-v2-to-v3/README.md) (если вы на старом релизе и хотите перенести данные)
 - [Knowledge OpenAPI](./MemoryKnowledge/openapi.yaml)
-- **API Documentation**:
+- **Документация API**:
   - [Memory Core v3 API](./MemoryCore/v3-api-memorycore-doc.md)
   - [Memory Knowledge v3 API](./MemoryKnowledge/v3-api-memoryknowledge-doc.md)
   - [Memory Proxy v3 API](./MemoryProxy/v3-api-memoryproxy-doc.md)
   - [Memory Panel API](./MemoryPanel/panel-api-doc.md)
-- [Contributing Guide](./CONTRIBUTING.md)
+- [Руководство для контрибьюторов](./CONTRIBUTING.md)
 
-Agent Memory doesn't have a settled standard yet. Bug reports, documentation, benchmarks, new framework adapters, and more creative Memory Hub use cases are all welcome.
-
----
-## Roadmap
-
-Current release is **v2.0.0**. Next up (**v2.0.1**): zero-config cold start, faster Wiki generation, user/team custom prompts, Skill export, and Codex (IDE Plan mode) support.
-
-👉 See the full plan in [**ROADMAP.md**](./ROADMAP.md) (中文: [ROADMAP_CN.md](./ROADMAP_CN.md)).
+У Agent Memory пока нет устоявшегося стандарта. Приветствуются баг-репорты, документация, бенчмарки, адаптеры новых фреймворков и более креативные сценарии использования Memory Hub.
 
 ---
-## Acknowledgements
+## Дорожная карта
 
-TencentDB Agent Memory stands on the shoulders of the open-source community:
+Текущий релиз — **v2.0.0**. Далее (**v2.0.1**): холодный старт без настройки, более быстрая генерация Wiki, пользовательские/командные промпты, экспорт скиллов и поддержка Codex (режим Plan в IDE).
 
-- [**CodeGraph**](https://github.com/colbymchenry/codegraph) — our CodeGraph asset module **uses code from this project**. Its design of a pre-indexed code graph is the foundation of our implementation.
-- [**Hermes Agent**](https://github.com/nousresearch/hermes-agent) (Nous Research) — our Skill asset management **uses part of the Skill-related code from Hermes Agent and builds further optimizations base on it**.
-- [**"LLM Wiki"** by Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — the idea of treating documentation as an LLM-maintained, incrementally growing knowledge artifact directly informed how our Wiki layer is built and kept up to date.
-
-We are grateful to the authors and contributors of these projects.
+👉 Полный план — в [**ROADMAP.md**](./ROADMAP.md) (中文: [ROADMAP_CN.md](./ROADMAP_CN.md)).
 
 ---
-## Community & Contributing
+## Благодарности
 
-We welcome contributions of all kinds — bug reports, feature suggestions, documentation fixes, benchmark reproductions, ecosystem integrations, or pull requests. Agent memory is far from settled, and we hope to build it together with the community.
+TencentDB Agent Memory стоит на плечах сообщества открытого кода:
 
-- 🐞 **Found a bug or have a question?** Open an issue in [GitHub Issues](https://github.com/TencentCloud/TencentDB-Agent-Memory/issues) — we respond within 24 hours.
-- 💡 **Have an idea to share?** Start a thread in [GitHub Discussions](https://github.com/TencentCloud/TencentDB-Agent-Memory/discussions).
-- 🛠️ **Want to contribute code?** Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
-- 💬 **Want to chat with us?** Join our [Discord community](https://discord.gg/dJQM6mKMF) and talk to the core developers directly.
+- [**CodeGraph**](https://github.com/colbymchenry/codegraph) — наш модуль активов CodeGraph **использует код этого проекта**. Его идея предварительно проиндексированного кодового графа — основа нашей реализации.
+- [**Hermes Agent**](https://github.com/nousresearch/hermes-agent) (Nous Research) — управление скиллами **использует часть кода скиллов из Hermes Agent и развивает его дальнейшими оптимизациями**.
+- [**«LLM Wiki»** Андрея Карпаты](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — идея документа как растущего инкрементально артефакта знаний, сопровождаемого LLM, напрямую повлияла на устройство и актуальность нашего слоя Wiki.
+
+Мы благодарны авторам и контрибьюторам этих проектов.
+
+---
+## Сообщество и вклад в проект
+
+Мы приветствуем вклад любого рода — баг-репорты, предложения функций, правки документации, воспроизведения бенчмарков, интеграции в экосистему и pull request'ы. Память агентов далеко не устоялась, и мы надеемся строить её вместе с сообществом.
+
+- 🐞 **Нашли баг или есть вопрос?** Откройте issue в [GitHub Issues](https://github.com/TencentCloud/TencentDB-Agent-Memory/issues) — отвечаем в течение 24 часов.
+- 💡 **Есть идея?** Создайте обсуждение в [GitHub Discussions](https://github.com/TencentCloud/TencentDB-Agent-Memory/discussions).
+- 🛠️ **Хотите внести код?** Сначала прочтите [CONTRIBUTING.md](./CONTRIBUTING.md).
+- 💬 **Хотите пообщаться?** Присоединяйтесь к [Discord-сообществу](https://discord.gg/dJQM6mKMF) и говорите с разработчиками ядра напрямую.
 
 ---
 
 <p align="center">
- Let the path the team has walked become the next Agent's starting line.
+ Пусть путь, пройденный командой, станет стартовой линией следующего агента.
 </p>
 
 ---
 
-## ✨ Contributors
+## ✨ Контрибьюторы
 
-> 💡 Thanks to the following contributors building with us — you make TencentDB Agent Memory better.
+> 💡 Спасибо следующим участникам, строящим проект вместе с нами, — вы делаете TencentDB Agent Memory лучше.
 
 <div align="center">
   <a href="https://github.com/TencentCloud/TencentDB-Agent-Memory/graphs/contributors">
@@ -364,8 +363,8 @@ We welcome contributions of all kinds — bug reports, feature suggestions, docu
 <table width="100%">
   <tr>
     <td width="68%">
-      <b>If TencentDB Agent Memory has been helpful to you, please consider starring the project.</b><br />
-      If you have any suggestions, feel free to open an issue for discussion.
+      <b>Если TencentDB Agent Memory был вам полезен — поставьте проекту звезду.</b><br />
+      Есть предложения — открывайте issue для обсуждения.
     </td>
     <td width="32%" align="right">
       <img src="./assets/images/star-helper.png" alt="Star TencentDB Agent Memory" width="260" />
@@ -375,7 +374,7 @@ We welcome contributions of all kinds — bug reports, feature suggestions, docu
 
 ---
 
-## Star History
+## История звёзд (Star History)
 
 <p align="center">
   <a href="https://star-history.dera.page/#TencentCloud/TencentDB-Agent-Memory&Date">
