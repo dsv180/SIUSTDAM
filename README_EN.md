@@ -4,7 +4,13 @@
 
 **This repository is a tracked mirror of the authors' repository [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory), created to adapt the system to the Russian language and to add capabilities driven by our usage patterns, which differ from the authors' vision.**
 
-**What is changed compared to the upstream version:** full Russian localization of the control panel UI (ru-RU locale, every key translated) and of the memory-pipeline prompts (L1 extraction, deduplication, L2 scenes, L3 persona) — no CJK characters in data; search: Snowball stemmer for Russian, jieba only for CJK, vector search enabled (embeddings via an OpenAI-compatible provider, 1536 dimensions) — final search is hybrid (full-text + vectors); a deployment kit (`deploy/`), gateway configuration with embeddings, installation and update checklists (`doc/`), a Windows build fix; gateway API key (Bearer) and panel auth proxying.
+**What is changed compared to the upstream version:**
+
+- full Russian localization: control panel UI (ru-RU locale, every key translated) and memory-pipeline prompts (L1 extraction, deduplication, L2 scenes, L3 persona) — no CJK characters in data;
+- search: Snowball stemmer for Russian, jieba only for CJK; vector search enabled (embeddings via an OpenAI-compatible provider, 1536 dimensions) — final search is hybrid (full-text + vectors);
+- a deployment kit (`deploy/`) and gateway configuration with embeddings;
+- installation and update checklists (`doc/`), a Windows build fix;
+- gateway API key (Bearer) and panel auth proxying.
 
 ---
 
