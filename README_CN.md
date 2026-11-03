@@ -1,3 +1,13 @@
+## 🇨🇳 关于本仓库（俄语适配版）
+
+**首先，衷心感谢 [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory) 的作者们：感谢他们的辛勤付出和这个优秀的产品——层次清晰的记忆架构、扎实的代码和坦诚的文档。本系统中一切优点都归功于他们。**
+
+**本仓库是作者仓库 [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory) 的跟踪镜像，用于将系统适配到俄语环境，并加入一些因我们使用方式与作者设想不同而产生的补充功能。**
+
+**与上游版本相比的修改：**控制面板界面完全俄语本地化（ru-RU 语言环境，全部键位已翻译）；记忆流水线提示词（L1 提取、去重、L2 场景、L3 人设）全部俄语化——数据中不含汉字；检索：俄语 Snowball 词干分析器、jieba 仅处理 CJK、启用向量嵌入（通过 OpenAI 兼容服务商，1536 维）——最终检索为混合式（全文 + 向量）；部署套件（`deploy/`）、网关配置（含嵌入模型）、安装与更新清单（`doc/`）、Windows 构建修复；网关 API 密钥（Bearer）与面板鉴权代理。
+
+---
+
 
 <div align="center">
 
@@ -16,7 +26,7 @@
 
 [安装](#安装) · [支持的 Agent](#所有-agent-共享同一个-memory-server) · [项目简介](#tencentdb-agent-memory-是什么) · [团队玩法](#一种玩法给一个人的公司组一支会成长的-agent-队伍) · [技术实现](#技术实现) · [Benchmark](#benchmark) · [Roadmap](#roadmap)
 
-[English](./README.md) · [**简体中文**](./README_CN.md)
+[English](./README_EN.md) · [**简体中文**](./README_CN.md) · [Русский](./README.md)
 
 </div>
 

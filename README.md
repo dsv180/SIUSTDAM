@@ -1,3 +1,13 @@
+## 🇷🇺 О русской версии этого репозитория
+
+**First and foremost — our sincere gratitude to the authors of [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory) for their work and for this wonderful product: a well-thought-out memory-layer architecture, solid code, and honest documentation. Everything good in this system is their credit.**
+
+**Этот репозиторий — отслеживаемая копия авторского репозитория [TencentDB Agent Memory](https://github.com/Tencent/TencentDB-Agent-Memory), созданная для адаптации системы под работу с русским языком и для внесения дополнений, обусловленных особенностями нашего использования, которые отличаются от видения авторов проекта.**
+
+**Что изменено по сравнению с авторской версией:** полная русификация интерфейса панели управления (локаль ru-RU, все ключи переведены) и промптов конвейера памяти (извлечение L1, дедупликация, сцены L2, персона L3) — данные без иероглифов; поиск: Snowball-стеммер для русского, jieba только для CJK, включён векторный поиск (эмбеддинги через OpenAI-совместимый провайдер, 1536 измерений) — итоговый поиск гибридный (полнотекст + векторы); комплект деплоя (`deploy/`), конфигурация шлюза с эмбеддингами, инструкции установки и обновления (`doc/`), исправление сборки под Windows; API-ключ шлюза (Bearer) и авторизация панели.
+
+---
+
 
 <div align="center">
 
@@ -16,7 +26,7 @@
 
 [Installation](#installation) · [Supported Agents](#all-agents-share-the-same-memory-server) · [What is it?](#what-is-tencentdb-agent-memory) · [Team Play](#one-play-style-build-a-growing-agent-team-for-a-one-person-company) · [Technical Implementation](#technical-implementation) · [Benchmark](#benchmark) · [Roadmap](#roadmap)
 
-[**English**](./README.md) · [简体中文](./README_CN.md)
+[**Русский**](./README.md) · [English](./README_EN.md) · [简体中文](./README_CN.md)
 
 </div>
 
