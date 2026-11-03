@@ -12,7 +12,7 @@
 - installation and update checklists (`doc/`), a Windows build fix;
 - gateway API key (Bearer) and panel auth proxying.
 
-**Note:** below is the original authors' README. The procedures, paths, and scripts described there refer to the authors' repository and its deployment method. Deploying our adapted version is described in [doc/УСТАНОВКА-НА-ЧИСТОЙ-МАШИНЕ.md](./doc/УСТАНОВКА-НА-ЧИСТОЙ-МАШИНЕ.md); updating an already-deployed machine — in [doc/ОБНОВЛЕНИЕ-НА-ВТОРОЙ-МАШИНЕ.md](./doc/ОБНОВЛЕНИЕ-НА-ВТОРОЙ-МАШИНЕ.md).
+**Note:** below is the original authors' README. The procedures, paths, and scripts described there refer to the authors' repository and its deployment method. Deploying our adapted version is described in [install_ru.md](./doc/install_ru.md).
 
 ---
 
