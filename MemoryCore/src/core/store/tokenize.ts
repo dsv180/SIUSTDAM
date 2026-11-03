@@ -15,6 +15,7 @@
  */
 
 import { createRequire } from "node:module";
+import { stemRuTokens } from "./ru-stemmer.js";
 
 const require = createRequire(import.meta.url);
 
@@ -70,11 +71,27 @@ export const ZH_STOP_WORDS = new Set([
  * Example (fallback):
  *   "旅行计划 API" → '"旅行计划" OR "API"'
  */
+
+// ── Russian wordform support (Snowball stemmer, обе стороны) ──
+// По схеме Elastic/Postgres russian-анализатора: один и тот же стеммер
+// на write-side (tokenizeForFts) и query-side (buildFtsQuery) —
+// словоформы сводятся к общему стему без prefix-хаков.
+
+function stemRuNonCjkTokens(tokens) {
+  return stemRuTokens(tokens);
+}
+
+const HAS_CJK = /[\u3400-\u4dbf\u4e00-\u9fff]/;
+
+function shouldUseJieba(raw) {
+  return getJieba() && HAS_CJK.test(raw);
+}
+
 export function buildFtsQuery(raw: string): string | null {
   const jieba = getJieba();
 
   let tokens: string[];
-  if (jieba) {
+  if (shouldUseJieba(raw)) {
     tokens = jieba
       .cutForSearch(raw, true)
       .map((t) => t.trim())
@@ -94,6 +111,7 @@ export function buildFtsQuery(raw: string): string | null {
   }
 
   if (tokens.length === 0) return null;
+  tokens = stemRuNonCjkTokens(tokens);
   const quoted = tokens.map((t) => `"${t.replaceAll('"', "")}"`);
   return quoted.join(" OR ");
 }
@@ -108,7 +126,7 @@ export function buildFtsQuery(raw: string): string | null {
  */
 export function extractQueryTokens(raw: string): string[] {
   const jieba = getJieba();
-  if (jieba) {
+  if (shouldUseJieba(raw)) {
     const tokens = jieba
       .cutForSearch(raw, true)
       .map((t) => t.trim())
@@ -120,12 +138,12 @@ export function extractQueryTokens(raw: string): string[] {
       });
     return [...new Set(tokens)];
   }
-  return (
+  const tokens =
     raw
       .match(/[\p{L}\p{N}_]+/gu)
       ?.map((t) => t.trim())
-      .filter(Boolean) ?? []
-  );
+      .filter(Boolean) ?? [];
+  return stemRuNonCjkTokens(tokens);
 }
 
 /**
@@ -143,9 +161,13 @@ export function extractQueryTokens(raw: string): string[] {
  *   "人工智能的分支"     → "人工 智能 人工智能 的 分支"
  */
 export function tokenizeForFts(raw: string): string {
-  const jieba = getJieba();
-  if (!jieba) return raw;
-  const tokens = jieba.cutForSearch(raw, true);
+  if (!shouldUseJieba(raw)) {
+    // Не-CJK (русский, латиница): lowercase → стоп-слова → Snowball-стемминг.
+    // Стемы записываются в индекс; query-side стеммит так же — словоформы сводятся.
+    const words = raw.match(/[\p{L}\p{N}_]+/gu)?.map((t) => t.toLowerCase()) ?? [];
+    return stemRuTokens(words).join(" ") || raw;
+  }
+  const tokens = getJieba().cutForSearch(raw, true);
   return tokens.join(" ");
 }
 
