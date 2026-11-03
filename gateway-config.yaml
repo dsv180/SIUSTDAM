@@ -1,0 +1,67 @@
+# Конфиг пилота TDAM (standalone) — заказчик: отдел поддержки 1С.
+# LLM-ключ подставляется из переменной окружения TDAI_LLM_API_KEY
+# (её задаёт start-gateway.cmd из gateway.env). Ключ в git и файлы не пишем.
+
+server:
+  port: 8420
+  host: "0.0.0.0"          # для коллективного доступа сменить на 0.0.0.0 + TDAI_GATEWAY_API_KEY
+
+data:
+  baseDir: "~/.memory-tencentdb/memory-tdai"
+
+llm:
+  baseUrl: "https://api.aitunnel.ru/v1"
+  apiKey: "${TDAI_LLM_API_KEY}"
+  model: "deepseek-v4.1-flash"  # выбор заказчика: 9/100 ₽ за млн токенов (вход ≤ 30-40, выход ≤ 200)
+  maxTokens: 8192             # deepseek-v4.1-flash — рассуждающая: в L2 сжигает 4к на мышление
+  timeoutMs: 120000
+
+memory:
+  capture:
+    enabled: true
+  extraction:
+    enabled: true
+    enableDedup: true
+    maxMemoriesPerSession: 20
+  persona:
+    triggerEveryN: 50
+    maxScenes: 15
+    triggerMode: current
+  pipeline:
+    everyNConversations: 5
+    enableWarmup: true
+    l1IdleTimeoutSeconds: 600
+    l2DelayAfterL1Seconds: 90
+    l2MinIntervalSeconds: 900
+    l2MaxIntervalSeconds: 3600
+  recall:
+    enabled: true
+    maxResults: 5
+    scoreThreshold: 0.3
+    strategy: "hybrid"
+    timeoutMs: 5000
+  storeBackend: "sqlite"
+  embedding:
+    # фаза 2: включено 2026-11-03 — конфиг, проверенный и запущенный на SIUSTDAM
+    enabled: true
+    provider: "openai"
+    baseUrl: "https://api.aitunnel.ru/v1"
+    apiKey: "${TDAI_LLM_API_KEY}"
+    model: "text-embedding-3-small"
+    dimensions: 1536
+  bm25:
+    enabled: true
+    language: "en"            # русский текст: en-токенизация вместо jieba(zh)
+
+# ── Skill-модуль: извлечение скиллов из диалогов и маршрутизация ──
+skill:
+  enabled: true
+  routing:
+    mode: bm25
+    searchTopK: 20
+  extraction:
+    enabled: true
+    maxIterations: 16
+  resources:
+    maxResourceSizeBytes: 5000000
+    allowExecutable: false
