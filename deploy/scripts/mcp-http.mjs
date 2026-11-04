@@ -124,12 +124,18 @@ const httpServer = createServer(async (req, res) => {
 
     // Фирменный зонд ZCode: клиент до initialize спрашивает поддерживаемые
     // версии и возможности. Без ответа клиент считает сервер неподходящим.
+    // ВАЖНО: с обновления 3.17+ клиент признаёт сервер «modern» только если
+    // его собственная modern-версия ("2026-07-28", ZCode: o_o/Zkn) входит в
+    // supportedVersions ответа. Иначе — ветка legacy, corrective-повторы и
+    // ~30-секундный таймаут в UI (mcp-sync.listWorkspaceMcpServerStatuses),
+    // хотя сам хендшейк и tools/call при этом работают. Держим modern-версию
+    // первой строкой; дату брать из бандла клиента (grep -o 'o_o="[^"]*"').
     if (parsed && !Array.isArray(parsed) && parsed.method === "server/discover") {
       const wantsSSE = String(req.headers.accept || "").includes("text/event-stream");
       const result = {
         ttlMs: 300000,
         cacheScope: "private",
-        supportedVersions: ["2025-06-18", "2025-03-26", "2024-11-05"],
+        supportedVersions: ["2026-07-28", "2025-06-18", "2025-03-26", "2024-11-05"],
         capabilities: { tools: { listChanged: false } },
       };
       if (wantsSSE) {
