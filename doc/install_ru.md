@@ -1,4 +1,4 @@
-# Установка системы командной памяти отдела на чистую машину (из репозитория SIUSTDAM)
+# Установка системы командной памяти на чистую машину (из репозитория SIUSTDAM)
 
 > Полная инструкция «с нуля до работающей системы» для агента на чистой
 > Windows-машине. Источник — репозиторий `github.com/dsv180/SIUSTDAM`
@@ -31,9 +31,9 @@ git-операции с сетью выполняйте от имени влад
 ## 1. Клонирование
 
 ```cmd
-mkdir E:\LocalGit 2>nul
-git clone https://github.com/dsv180/SIUSTDAM.git E:\LocalGit\TencentDB-Agent-Memory
-cd /d E:\LocalGit\TencentDB-Agent-Memory
+mkdir <локальный-клон> 2>nul
+git clone https://github.com/dsv180/SIUSTDAM.git <локальный-клон>\TencentDB-Agent-Memory
+cd /d <локальный-клон>\TencentDB-Agent-Memory
 git checkout pilot-patches
 ```
 
@@ -46,7 +46,7 @@ git checkout pilot-patches
 
 ```cmd
 mkdir C:\TDAM
-mklink /J C:\TDAM\agent-memory E:\LocalGit\TencentDB-Agent-Memory
+mklink /J C:\TDAM\agent-memory <локальный-клон>\TencentDB-Agent-Memory
 deploy\sync-to-tdam.cmd
 ```
 
@@ -57,7 +57,7 @@ deploy\sync-to-tdam.cmd
 Конфиг шлюза (`gateway-config.yaml`) копируется **только если его ещё нет**
 в `C:\TDAM` — то есть при первичной установке на чистой машине. Если конфиг
 уже есть, скрипт его не трогает: на машине может лежать намеренно свой
-вариант (например, `dsv` хранит Ollama bge-m3 1024d, тогда как репо-вариант
+вариант (например, машина может хранить Ollama bge-m3 1024d, тогда как репо-вариант
 — text-embedding-3-small 1536d; подмена сломала бы поиск по накопленным
 векторам). Перезаписать конфиг принудительно:
 `deploy\sync-to-tdam.cmd --force-config`.
