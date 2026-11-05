@@ -42,27 +42,49 @@ try {
 prompt = String(prompt).trim();
 if (!prompt) fail("нет текста реплики — пустой вывод");
 
-try {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-  // L1-памятки по тексту реплики (персона и сцены уже впрыснуты на SessionStart)
+async function searchMemories(body, signal) {
   const res = await fetch(GW + "/search/memories", {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8", ...AUTH },
-    body: JSON.stringify({ query: prompt.slice(0, 500), limit: 3 }),
-    signal: controller.signal,
+    body: JSON.stringify(body),
+    signal,
   });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+try {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  const query = prompt.slice(0, 500);
+
+  // Два запроса параллельно:
+  //  1) общие L1-памятки по тексту реплики (как раньше);
+  //  2) УРОКИ ОБ ОШИБКАХ ИНСТРУМЕНТОВ — отдельным запросом с фильтром по типу.
+  // Зачем раздельно: уроки (type=work_method) тонут среди проектных записей
+  // и не попадают в топ-3 общего поиска. Отдельный запрос по типу изолирует
+  // их, чтобы канал ошибок доходил до агента наравне с прочим контекстом.
+  const [jGeneral, jLessons] = await Promise.all([
+    searchMemories({ query, limit: 3 }, controller.signal).catch(() => null),
+    searchMemories({ query, limit: 3, type: "work_method" }, controller.signal).catch(() => null),
+  ]);
   clearTimeout(timer);
-  if (!res.ok) fail(`gateway HTTP ${res.status}`);
-  const j = await res.json();
-  if (!j.total || j.total === 0) fail("по реплике памяток нет — пустой вывод");
-  const trimmed = (j.results || "").length > 3000 ? (j.results || "").slice(0, 3000) + "\n…(усечено; полный поиск: node C:/TDAM/memory.mjs search \"<запрос>\")" : (j.results || "");
-  emit(
-    "UserPromptSubmit",
-    "=== Командная память отдела — памятки, релевантные этой реплике ===\n" +
-    "(найдено в общей памяти по тексту запроса; пользоваться или нет — решай по смыслу)\n\n" +
-    trimmed
-  );
+
+  const general = (jGeneral && jGeneral.total) ? (jGeneral.results || "").trim() : "";
+  const lessons = (jLessons && jLessons.total) ? (jLessons.results || "").trim() : "";
+  if (!general && !lessons) fail("по реплике памяток нет — пустой вывод");
+
+  const clip = (s, n) => s.length > n ? s.slice(0, n) + "\n…(усечено; полный поиск: node C:/TDAM/memory.mjs search \"<запрос>\")" : s;
+
+  let ctx = "=== Командная память отдела — памятки, релевантные этой реплике ===\n" +
+            "(найдено в общей памяти по тексту запроса; пользоваться или нет — решай по смыслу)\n\n" +
+            clip(general, 2500);
+  if (lessons) {
+    ctx += "\n\n=== Уроки об ошибках инструментов (проверь перед похожими вызовами) ===\n" +
+           "(правила предотвращения повторных ошибок; если собираешься вызывать такой инструмент — учти)\n\n" +
+           clip(lessons, 1500);
+  }
+  emit("UserPromptSubmit", ctx);
 } catch (e) {
   fail(`ошибка поиска: ${e.message}`);
 }
