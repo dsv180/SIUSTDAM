@@ -185,7 +185,18 @@ async function runLlmJudgment(
       });
     }
 
-    const decisions = parseBatchResult(result, memories, logger);
+    // ── [pilot-patch] Карта «новая память → id её кандидатов» ────────────
+    // Нужна, чтобы починить merge/update без target_ids: подставить лучшего
+    // кандидата вместо создания дубля (см. parseBatchResult).
+    const candidatesByNewId = new Map<string, string[]>();
+    for (const m of matches) {
+      candidatesByNewId.set(
+        m.newMemory.record_id,
+        m.candidates.map((c) => c.id),
+      );
+    }
+
+    const decisions = parseBatchResult(result, memories, logger, candidatesByNewId);
     return decisions;
   } catch (err) {
     logger?.warn?.(
@@ -311,6 +322,9 @@ function parseBatchResult(
   raw: string,
   memories: Array<ExtractedMemory & { record_id: string }>,
   logger?: Logger,
+  /** [pilot-patch] Карта record_id новой памяти → id кандидатов из пула.
+   *  Нужна для починки merge/update без target_ids (см. ниже). */
+  candidatesByNewId?: Map<string, string[]>,
 ): DedupDecision[] {
   try {
     // ── Strip inline reasoning wrappers (A₂-style thinking models) ───────
@@ -374,16 +388,40 @@ function parseBatchResult(
         logger?.debug?.(`${TAG} Skipping decision with empty record_id`);
         continue;
       }
-      const action = String(d.action ?? "store");
+      let action = String(d.action ?? "store");
 
       if (!validActions.includes(action)) {
         logger?.warn?.(`${TAG} Invalid action "${action}" for record ${recordId}, defaulting to store`);
+        action = "store";
+      }
+
+      let targetIds = Array.isArray(d.target_ids) ? d.target_ids.map(String) : [];
+
+      // ── [pilot-patch] Починка merge/update без target_ids ───────────────
+      // LLM иногда выбирает merge/update, но не проставляет target_ids.
+      // Без target_ids writeMemory НЕ удаляет старые записи (l1-writer.ts:275)
+      // и создаёт новую с новым id — вместо слияния получается ДУБЛЬ.
+      // Здесь подставляем лучшего кандидата из пула; если кандидатов нет —
+      // понижаем до store, чтобы решение было корректным.
+      if ((action === "merge" || action === "update") && targetIds.length === 0) {
+        const pool = candidatesByNewId?.get(recordId) ?? [];
+        if (pool.length > 0) {
+          targetIds = [pool[0]];
+          logger?.warn?.(
+            `${TAG} [pilot-patch] ${action} без target_ids для ${recordId} — подставлен кандидат ${pool[0]}`,
+          );
+        } else {
+          logger?.warn?.(
+            `${TAG} [pilot-patch] ${action} без target_ids для ${recordId} — кандидатов нет, понижено до store`,
+          );
+          action = "store";
+        }
       }
 
       decisions.push({
         record_id: recordId,
-        action: validActions.includes(action) ? (action as DedupDecision["action"]) : "store",
-        target_ids: Array.isArray(d.target_ids) ? d.target_ids.map(String) : [],
+        action: action as DedupDecision["action"],
+        target_ids: targetIds,
         merged_content: typeof d.merged_content === "string" ? d.merged_content : undefined,
         merged_type: VALID_TYPES.includes(d.merged_type as MemoryType) ? (d.merged_type as MemoryType) : undefined,
         merged_priority: typeof d.merged_priority === "number" ? d.merged_priority : undefined,

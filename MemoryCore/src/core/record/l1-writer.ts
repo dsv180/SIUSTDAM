@@ -278,8 +278,19 @@ export async function writeMemory(params: {
     // by memory-cleaner (which reconciles against VectorStore as source of truth).
     if (vectorStore) {
       try {
-        const deleteFilter = teamId || userId || agentId || sessionId
-          ? { teamId, userId, agentId, sessionId: sessionId || undefined, sessionKey }
+        // [pilot-patch] Выравнивание delete-фильтра с recall-фильтром дедупа.
+        // Было: { teamId, userId, agentId, sessionId, sessionKey } — sessionKey
+        // блокировал удаление записей из ДРУГИХ сессий, тогда как candidate
+        // recall в batchDedup ищет кросс-сессионно (фильтр без sessionKey:
+        // l1-extractor.ts → batchDedup filter = {teamId, userId, agentId,
+        // sessionId, taskId}). Дедуп решал merge по найденным записям, но
+        // deleteL1Batch пропускал их по несовпадению session_key и возвращал
+        // true — ложный успех, дубли оставались. Session — не tenant
+        // (isolation.ts: rowMatchesIsolation), кросс-сессионный дедуп в рамках
+        // tenant — by design; delete обязан использовать ту же изоляцию, что
+        // и recall, иначе merge не схлопывает найденные дубли.
+        const deleteFilter = teamId || userId || agentId || sessionId || taskId
+          ? { teamId, userId, agentId, sessionId, taskId }
           : undefined;
         if (deleteFilter) {
           await vectorStore.deleteL1Batch(decision.target_ids, deleteFilter);
