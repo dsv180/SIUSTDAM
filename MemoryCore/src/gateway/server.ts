@@ -62,6 +62,7 @@ import { validateAndNormalizeRaw, SeedValidationError } from "../core/seed/input
 import { executeSeed } from "../core/seed/seed-runtime.js";
 import type { SeedProgress } from "../core/seed/types.js";
 import { handleV2Route, errorEnvelope, makeRequestId } from "./v2-router.js";
+import { handleConnectRoute } from "./connect-router.js";
 import type { V2RouterDeps } from "./v2-router.js";
 import { handleV3MetaRoute, V3_PREFIX } from "../metadata/router/v3-meta-router.js";
 import { handleV3TaskSourceRoute } from "../metadata/router/v3-task-source-router.js";
@@ -1205,6 +1206,14 @@ export class TdaiGateway {
       // an unconditionally cheap probe.
       if (method === "GET" && pathname === "/health") {
         return this.handleHealth(res);
+      }
+
+      // ── connect onboarding routes (/connect/*) — pilot-patch ──
+      // Онбординг агентов: манифест + инструкция + мост. Публично на полигоне
+      // (секретов в ответах нет); user_key-гейт (К5) — при выносе на сервер.
+      // Замысел: doc/модули/онбординг-эндпоинт/. Откат: удалить этот блок и файл.
+      if (method === "GET" && (pathname === "/connect" || pathname.startsWith("/connect/"))) {
+        if (handleConnectRoute(req, res, pathname, method)) return;
       }
 
       // All other routes go through the optional auth gate. When apiKey is
