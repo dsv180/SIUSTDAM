@@ -37,6 +37,22 @@ export type MemoryType =
   | "work_method"
   | "work_artifact";
 
+/**
+ * [pilot-patch] Префиксы session_key сессий, для которых разрешено
+ * кросс-сессионное удаление при merge (канал инструментальных ошибок:
+ * хук пишет в сессии "tool-fail-<user>-<date>"). Для всех остальных сессий
+ * delete-фильтр содержит sessionKey — основная память сессионно-защищена:
+ * знания (эпизоды, факты) зависят от сессии и не должны схлопываться
+ * дедупом из чужих сессий. Настраивается переменной окружения
+ * TDAI_CROSS_SESSION_DELETE_PREFIX (список префиксов через запятую).
+ */
+const CROSS_SESSION_DELETE_PREFIXES: string[] = (
+  process.env.TDAI_CROSS_SESSION_DELETE_PREFIX ?? "tool-fail-"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 /** Metadata for episodic memories (activity time range) */
 export interface EpisodicMetadata {
   activity_start_time?: string; // ISO 8601
@@ -278,20 +294,27 @@ export async function writeMemory(params: {
     // by memory-cleaner (which reconciles against VectorStore as source of truth).
     if (vectorStore) {
       try {
-        // [pilot-patch] Выравнивание delete-фильтра с recall-фильтром дедупа.
-        // Было: { teamId, userId, agentId, sessionId, sessionKey } — sessionKey
-        // блокировал удаление записей из ДРУГИХ сессий, тогда как candidate
-        // recall в batchDedup ищет кросс-сессионно (фильтр без sessionKey:
-        // l1-extractor.ts → batchDedup filter = {teamId, userId, agentId,
-        // sessionId, taskId}). Дедуп решал merge по найденным записям, но
-        // deleteL1Batch пропускал их по несовпадению session_key и возвращал
-        // true — ложный успех, дубли оставались. Session — не tenant
-        // (isolation.ts: rowMatchesIsolation), кросс-сессионный дедуп в рамках
-        // tenant — by design; delete обязан использовать ту же изоляцию, что
-        // и recall, иначе merge не схлопывает найденные дубли.
-        const deleteFilter = teamId || userId || agentId || sessionId || taskId
-          ? { teamId, userId, agentId, sessionId, taskId }
-          : undefined;
+        // [pilot-patch] Выравнивание delete-фильтра с recall-фильтром дедупа —
+        // но ТОЛЬКО для канала ошибок (см. CROSS_SESSION_DELETE_PREFIXES).
+        // Recall (batchDedup) ищет кандидатов кросс-сессионно (фильтр без
+        // sessionKey), и дедуп решает merge по найденным записям. Delete
+        // обязан использовать ту же изоляцию, что и recall, иначе merge
+        // не схлопывает найденные дубли (deleteL1Batch молча пропускал
+        // записи по несовпадению session_key и возвращал true).
+        // Ограничение: кросс-сессионное удаление разрешено ТОЛЬКО сессиям
+        // канала ошибок (префикс "tool-fail-"); для всей остальной памяти
+        // фильтр содержит sessionKey — знания зависят от сессии и не должны
+        // схлопываться из чужих сессий (решение заказчика, 06.11.2026).
+        const crossSessionDelete = CROSS_SESSION_DELETE_PREFIXES.some((p) =>
+          sessionKey.startsWith(p),
+        );
+        const deleteFilter = crossSessionDelete
+          ? (teamId || userId || agentId || sessionId || taskId
+              ? { teamId, userId, agentId, sessionId, taskId }
+              : undefined)
+          : (teamId || userId || agentId || sessionId
+              ? { teamId, userId, agentId, sessionId, sessionKey }
+              : undefined);
         if (deleteFilter) {
           await vectorStore.deleteL1Batch(decision.target_ids, deleteFilter);
         } else {
