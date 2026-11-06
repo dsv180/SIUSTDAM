@@ -98,7 +98,7 @@ async function callTool(
   }
 
   if (resp.status === 401 || resp.status === 403) {
-    throw new IWikiMcpError("iWiki token invalid or expired（太湖个人令牌无效或已过期）", resp.status);
+    throw new IWikiMcpError("iWiki token invalid or expired", resp.status);
   }
   if (!resp.ok) {
     throw new IWikiMcpError(`iWiki MCP error (${toolName}): HTTP ${resp.status}`, resp.status);

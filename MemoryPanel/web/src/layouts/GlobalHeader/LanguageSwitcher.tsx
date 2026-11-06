@@ -7,7 +7,7 @@ import { changeLanguage, getCurrentLanguage } from '@/i18n';
 import './language-switcher.css';
 
 const LANGS = [
-  { code: 'zh-CN', label: '中文' },
+  { code: 'zh-CN', label: 'Chinese' },
   { code: 'en-US', label: 'English' },
   { code: 'ru-RU', label: 'Русский' },
 ];

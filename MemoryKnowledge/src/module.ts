@@ -378,7 +378,7 @@ export function createKnowledgeModule(config: KnowledgeModuleConfig): KnowledgeM
 
     // 目录校验：build() 入队前已查过一次，这里再查是防「入队后到执行前」被删。
     if (!existsSync(dir)) {
-      throw new Error(`代码目录不存在，无法构建：${dir}`);
+      throw new Error(`Code directory does not exist, cannot build: ${dir}`);
     }
 
     setInternalStatus("indexing");

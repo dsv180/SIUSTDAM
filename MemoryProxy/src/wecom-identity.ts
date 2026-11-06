@@ -115,7 +115,7 @@ export async function saveWecomName(config: ProxyConfig, apiKey: string, submitt
   const name = submittedName.trim().replace(/\s+/g, " ");
   const maxNameLength = settings.maxNameLength;
   if (!name || name.length > maxNameLength) {
-    throw new Error(`企业微信名称不能为空且不能超过 ${maxNameLength} 个字符`);
+    throw new Error(`WeCom name must not be empty and must not exceed ${maxNameLength} characters`);
   }
   if (!apiKey) throw new Error("an API key is required for WeCom identity");
   const hash = keyHash(apiKey);
