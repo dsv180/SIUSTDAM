@@ -1214,6 +1214,7 @@ export class TdaiGateway {
           serviceId: "default",
           core: this.core,
           logger: this.logger,
+          getMetadataService: (instanceId) => this.ensureMetadataService(instanceId),
           defaultIsolation: {
             teamId: process.env.TDAI_MCP_TEAM_ID || "default",
             agentId: process.env.TDAI_MCP_AGENT_ID || "default",
