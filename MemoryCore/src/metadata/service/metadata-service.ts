@@ -1489,7 +1489,10 @@ export class MetadataService {
           name: `Memory of ${agent.name}`,
           owner_user_id: agent.owner_user_id,
           source_type: "auto",
-          visibility: "private",
+          // [pilot-patch] Решение заказчика 08.11: личный блок каждого агента
+          // команды виден в панели (вкладка «Активы команды» фильтрует
+          // visibility=team). Откат: вернуть "private".
+          visibility: "team",
           status: "active",
         });
       } catch (err) {
