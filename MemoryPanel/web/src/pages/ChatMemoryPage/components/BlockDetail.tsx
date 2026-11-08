@@ -946,8 +946,11 @@ export function BlockDetail({
                 </div>
               )}
               <div className="_memory-chat-list">
-                {/* 后端按最新对话从上到下返回，聊天视图需要反转为「旧在上、新在下」 */}
-                {[...block.layers.L0].reverse().map((msg, idx) => {
+                {/* [pilot-patch] Решение заказчика 08.11: новые записи сверху.
+                    Ядро /v3/conversation/query уже отдаёт новые первыми
+                    (ORDER BY timestamp DESC) — показываем в исходном порядке;
+                    «загрузить ещё» дописывает более старые снизу. */}
+                {block.layers.L0.map((msg, idx) => {
                   const role = extractRole(msg.role || msg.title || '');
                   const body = msg.body;
                   const tone = toneOfRole(role);
