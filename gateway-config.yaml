@@ -4,7 +4,7 @@
 
 server:
   port: 8420
-  host: "0.0.0.0"          # для коллективного доступа сменить на 0.0.0.0 + TDAI_GATEWAY_API_KEY
+  host: "0.0.0.0"          # коллективный доступ: + TDAI_GATEWAY_API_KEY в gateway.env (решение о включении — при развёртывании)
 
 data:
   baseDir: "~/.memory-tencentdb/memory-tdai"
@@ -42,13 +42,25 @@ memory:
     timeoutMs: 5000
   storeBackend: "sqlite"
   embedding:
-    # фаза 2: включено 2026-11-03 — конфиг, проверенный и запущенный на SIUSTDAM
+    # Решение заказчика 08.11.2026: основной канал эмбеддингов — локальная
+    # Ollama + bge-m3 (русский проверен живьём на корпусе отдела). Ollama
+    # с моделью bge-m3 ставится на машине ДО первого capture (чек-лист
+    # развёртывания). Смена модели = полный пере-эмбеддинг корпуса.
     enabled: true
-    provider: "openai"
-    baseUrl: "https://api.aitunnel.ru/v1"
-    apiKey: "${TDAI_LLM_API_KEY}"
-    model: "text-embedding-3-small"
-    dimensions: 1536
+    provider: "openai"             # OpenAI-совместимый API локальной Ollama
+    baseUrl: "http://127.0.0.1:11434/v1"
+    apiKey: "ollama"
+    model: "bge-m3"
+    dimensions: 1024
+    sendDimensions: false          # bge-m3 не поддерживает matryoshka-усечение
+    # Запасной канал (машинам без Ollama) — НЕ ИСПОЛЬЗУЕТСЯ, оставлен как
+    # справочник; возвращение к провайдерским эмбеддингам возможно под
+    # модели Sber/Яндекса (решение заказчика 08.11.2026):
+    # provider: "openai"
+    # baseUrl: "https://api.aitunnel.ru/v1"
+    # apiKey: "${TDAI_LLM_API_KEY}"
+    # model: "text-embedding-3-small"
+    # dimensions: 1536
   bm25:
     enabled: true
     language: "en"            # русский текст: en-токенизация вместо jieba(zh)
