@@ -384,7 +384,13 @@ export class TdaiCore {
    * Handle recall (memory retrieval) before an LLM turn.
    * Maps to: OpenClaw `before_prompt_build` / Hermes `prefetch()`.
    */
-  async handleBeforeRecall(userText: string, sessionKey: string): Promise<RecallResult> {
+  // [pilot-patch] optional isolation so /recall can scope persona + scenes to a
+  // v3 team/agent profile instead of the standalone default/default.
+  async handleBeforeRecall(
+    userText: string,
+    sessionKey: string,
+    isolation?: { teamId?: string; agentId?: string; userId?: string },
+  ): Promise<RecallResult> {
     await this.storeReady?.catch(() => {});
 
     const tStart = performance.now();
@@ -398,6 +404,7 @@ export class TdaiCore {
       vectorStore: this.vectorStore,
       embeddingService: this.embeddingService,
       storage: this.storage,
+      profileIsolation: isolation,
     });
     const recallLatencyMs = performance.now() - tStart;
 
@@ -517,11 +524,13 @@ export class TdaiCore {
    *                    don't have to pre-check whether the session was
    *                    already evicted or never produced a capture.
    */
-  async handleSessionEnd(sessionKey: string): Promise<void> {
+  // [pilot-patch] optional team/agent: flush a v3-scoped pipeline session
+  // (state keys carry team/agent when notifyConversation was called with them).
+  async handleSessionEnd(sessionKey: string, teamId?: string, agentId?: string): Promise<void> {
     if (!sessionKey) return;
     await this.storeReady?.catch(() => {});
     if (!this.scheduler) return;
-    await this.scheduler.flushSession(sessionKey);
+    await this.scheduler.flushSession(sessionKey, undefined, teamId, agentId);
   }
 
   // ============================

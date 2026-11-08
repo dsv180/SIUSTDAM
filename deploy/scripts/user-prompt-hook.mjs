@@ -11,8 +11,19 @@ import path from "node:path";
 const FILE = (() => { try { return JSON.parse(readFileSync(path.join(homedir(), ".zcode", "tdai-memory.json"), "utf8")); } catch { return {}; } })();
 const GW = (process.env.TDAI_GATEWAY_URL || FILE.gatewayUrl || "http://127.0.0.1:8420").replace(/\/$/, "");
 const USER = process.env.TDAI_USER_ID || FILE.userId || process.env.USERNAME || "user";
+// 08.11.2026: поиск переведён на v3 /atomic/search — скоупится на пространство
+// команды «Отдел поддержки 1С» (заголовки трио), выдача — items.
+const TEAM = process.env.TDAI_TEAM_ID || FILE.teamId || "";
+const AGENT = process.env.TDAI_AGENT_ID || FILE.agentId || "";
+const SERVICE = process.env.TDAI_SERVICE_ID || FILE.serviceId || "default";
 const SESSION = `turn-${USER}-${new Date().toISOString().slice(0, 10)}`;
-const AUTH = (() => { const k = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || ""; return k ? { Authorization: `Bearer ${k}` } : {}; })();
+const KEY = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || "";
+const HEAD = {
+  "Content-Type": "application/json; charset=utf-8",
+  ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
+  "x-tdai-service-id": SERVICE,
+  ...(TEAM && AGENT ? { "x-tdai-team-id": TEAM, "x-tdai-agent-id": AGENT, "x-tdai-user-id": USER } : {}),
+};
 
 function emit(eventName, ctx) {
   process.stdout.write(JSON.stringify({
@@ -43,14 +54,25 @@ prompt = String(prompt).trim();
 if (!prompt) fail("нет текста реплики — пустой вывод");
 
 async function searchMemories(body, signal) {
-  const res = await fetch(GW + "/search/memories", {
+  const res = await fetch(GW + "/v3/atomic/search", {
     method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8", ...AUTH },
+    headers: HEAD,
     body: JSON.stringify(body),
     signal,
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+// items v3-выдачи → текст в духе прежнего results
+function itemsToText(j) {
+  const items = j?.data?.items || [];
+  if (!items.length) return "";
+  return items.map(i => {
+    const score = typeof i.score === "number" ? ` (score ${i.score.toFixed(2)})` : "";
+    const scene = i.background ? ` [сцена: ${i.background}]` : "";
+    return `- [${i.type}${score}]${scene} ${i.content}`;
+  }).join("\n");
 }
 
 try {
@@ -70,8 +92,8 @@ try {
   ]);
   clearTimeout(timer);
 
-  const general = (jGeneral && jGeneral.total) ? (jGeneral.results || "").trim() : "";
-  const lessons = (jLessons && jLessons.total) ? (jLessons.results || "").trim() : "";
+  const general = itemsToText(jGeneral);
+  const lessons = itemsToText(jLessons);
   if (!general && !lessons) fail("по реплике памяток нет — пустой вывод");
 
   const clip = (s, n) => s.length > n ? s.slice(0, n) + "\n…(усечено; полный поиск: node C:/TDAM/memory.mjs search \"<запрос>\")" : s;

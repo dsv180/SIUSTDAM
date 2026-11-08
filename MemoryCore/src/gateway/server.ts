@@ -1573,7 +1573,12 @@ export class TdaiGateway {
     }
 
     const startMs = Date.now();
-    const result = await this.core.handleBeforeRecall(body.query, body.session_key);
+    // [pilot-patch] optional team/agent scoping for v3-tenanted callers.
+    const recallIsolation =
+      body.team_id || body.agent_id
+        ? { teamId: body.team_id || undefined, agentId: body.agent_id || undefined, userId: body.user_id || undefined }
+        : undefined;
+    const result = await this.core.handleBeforeRecall(body.query, body.session_key, recallIsolation);
     const elapsed = Date.now() - startMs;
 
     // H-15: distinguish "no recall content to inject" from "recall failed".
@@ -1682,7 +1687,8 @@ export class TdaiGateway {
       return;
     }
 
-    await this.core.handleSessionEnd(body.session_key);
+    // [pilot-patch] optional team/agent: flush a v3-scoped pipeline session.
+    await this.core.handleSessionEnd(body.session_key, body.team_id || undefined, body.agent_id || undefined);
 
     const response: SessionEndResponse = { flushed: true };
     sendJson(res, 200, response);

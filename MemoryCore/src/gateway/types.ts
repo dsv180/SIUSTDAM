@@ -39,6 +39,10 @@ export interface RecallRequest {
   query: string;
   session_key: string;
   user_id?: string;
+  // [pilot-patch] optional tenancy: scope recall to a v3 team/agent profile
+  // (persona + scenes). Absent → legacy default/default behaviour.
+  team_id?: string;
+  agent_id?: string;
 }
 
 export interface RecallResponse {
@@ -111,6 +115,9 @@ export interface ConversationSearchResponse {
 export interface SessionEndRequest {
   session_key: string;
   user_id?: string;
+  // [pilot-patch] optional tenancy: flush a v3-scoped pipeline session.
+  team_id?: string;
+  agent_id?: string;
 }
 
 export interface SessionEndResponse {

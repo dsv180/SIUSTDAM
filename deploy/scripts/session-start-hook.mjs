@@ -11,6 +11,10 @@ import path from "node:path";
 const FILE = (() => { try { return JSON.parse(readFileSync(path.join(homedir(), ".zcode", "tdai-memory.json"), "utf8")); } catch { return {}; } })();
 const GW = (process.env.TDAI_GATEWAY_URL || FILE.gatewayUrl || "http://127.0.0.1:8420").replace(/\/$/, "");
 const USER = process.env.TDAI_USER_ID || FILE.userId || process.env.USERNAME || "user";
+// 08.11.2026: recall скоупится на пространство команды «Отдел поддержки 1С»
+// (персона и сцены читаются из профиля команды, не из дефолтного).
+const TEAM = process.env.TDAI_TEAM_ID || FILE.teamId || "";
+const AGENT = process.env.TDAI_AGENT_ID || FILE.agentId || "";
 const QUERY = process.env.TDAI_STARTUP_QUERY || "регламент решения проекты отдел";
 
 const SESSION = `hook-${USER}-${new Date().toISOString().slice(0, 10)}`;
@@ -35,7 +39,7 @@ try {
   const res = await fetch(GW + "/recall", {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8", ...AUTH },
-    body: JSON.stringify({ query: QUERY, session_key: SESSION }),
+    body: JSON.stringify({ query: QUERY, session_key: SESSION, ...(TEAM && AGENT ? { team_id: TEAM, agent_id: AGENT, user_id: USER } : {}) }),
     signal: controller.signal,
   });
   clearTimeout(timer);

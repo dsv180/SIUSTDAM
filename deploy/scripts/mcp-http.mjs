@@ -16,9 +16,20 @@ import { z } from "zod";
 const FILE = (() => { try { return JSON.parse(readFileSync(path.join(homedir(), ".zcode", "tdai-memory.json"), "utf8")); } catch { return {}; } })();
 const GW = (process.env.TDAI_GATEWAY_URL || FILE.gatewayUrl || "http://127.0.0.1:8420").replace(/\/$/, "");
 const USER = process.env.TDAI_USER_ID || FILE.userId || process.env.USERNAME || "user";
+// 08.11.2026: инструменты работают с v3-пространством команды «Отдел
+// поддержки 1С» (team/agent/user из tdai-memory.json), не с дефолтным.
+const TEAM = process.env.TDAI_TEAM_ID || FILE.teamId || "";
+const AGENT = process.env.TDAI_AGENT_ID || FILE.agentId || "";
+const SERVICE = process.env.TDAI_SERVICE_ID || FILE.serviceId || "default";
 const PORT = Number(process.env.TDAI_MCP_HTTP_PORT || 8900);
 
-const AUTH = (() => { const k = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || ""; return k ? { Authorization: `Bearer ${k}` } : {}; })();
+const KEY = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || "";
+const HEAD = {
+  "Content-Type": "application/json; charset=utf-8",
+  ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
+  "x-tdai-service-id": SERVICE,
+  ...(TEAM && AGENT ? { "x-tdai-team-id": TEAM, "x-tdai-agent-id": AGENT, "x-tdai-user-id": USER } : {}),
+};
 
 const CANARY = "C:\\TDAM\\mcp-http-canary.log";
 function canary(msg) {
@@ -28,7 +39,7 @@ function canary(msg) {
 async function gw(pathName, body) {
   const res = await fetch(GW + pathName, {
     method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8", ...AUTH },
+    headers: HEAD,
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -47,8 +58,10 @@ server.tool(
   "Поиск по долговременной памяти команды (слой L1 — атомарные памятки: факты, правила, события). Запрос по-русски. Ищет во ВСЕЙ общей памяти.",
   { query: z.string().describe("Поисковый запрос (по-русски)"), limit: z.number().optional().describe("Сколько результатов (по умолчанию 5)") },
   async ({ query, limit }) => {
-    const r = JSON.parse(await gw("/search/memories", { query, limit: limit || 5 }));
-    return { content: [{ type: "text", text: `strategy=${r.strategy} total=${r.total}\n${r.results}` }] };
+    const r = JSON.parse(await gw("/v3/atomic/search", { query, limit: limit || 5 }));
+    const items = r.data?.items || [];
+    const text = items.map(i => `- [${i.type}] ${i.content}`).join("\n");
+    return { content: [{ type: "text", text: `total=${items.length}\n${text || "(пусто)"}` }] };
   },
 );
 
@@ -57,8 +70,10 @@ server.tool(
   "Поиск по исходным диалогам (слой L0) — дословные формулировки из прошлых разговоров.",
   { query: z.string().describe("Поисковый запрос"), limit: z.number().optional().describe("Сколько результатов (по умолчанию 5)") },
   async ({ query, limit }) => {
-    const r = JSON.parse(await gw("/search/conversations", { query, limit: limit || 5 }));
-    return { content: [{ type: "text", text: `total=${r.total}\n${r.results}` }] };
+    const r = JSON.parse(await gw("/v3/conversation/search", { query, limit: limit || 5 }));
+    const msgs = r.data?.messages || [];
+    const text = msgs.map(m => `- [${m.role}] ${m.content}`).join("\n");
+    return { content: [{ type: "text", text: `total=${msgs.length}\n${text || "(пусто)"}` }] };
   },
 );
 
@@ -71,13 +86,15 @@ server.tool(
   },
   async ({ user_content, assistant_content }, extra) => {
     const session = extra?.sessionId || sessionOf({});
-    const r = JSON.parse(await gw("/capture", {
-      user_content,
-      assistant_content: assistant_content || "(записано без ответа ассистента)",
-      session_key: session,
-      user_id: USER,
+    const r = JSON.parse(await gw("/v3/conversation/add", {
+      session_id: session,
+      messages: [
+        { role: "user", content: user_content },
+        { role: "assistant", content: assistant_content || "(записано без ответа ассистента)" },
+      ],
     }));
-    return { content: [{ type: "text", text: `записано: l0_recorded=${r.l0_recorded}, сессия=${session}` }] };
+    const n = (r.data?.accepted_ids || []).length;
+    return { content: [{ type: "text", text: `записано: l0=${n} (пространство отдела), сессия=${session}` }] };
   },
 );
 
@@ -87,7 +104,7 @@ server.tool(
   { query: z.string().describe("О чём вспомнить") },
   async ({ query }, extra) => {
     const session = extra?.sessionId || sessionOf({});
-    const r = JSON.parse(await gw("/recall", { query, session_key: session }));
+    const r = JSON.parse(await gw("/recall", { query, session_key: session, ...(TEAM && AGENT ? { team_id: TEAM, agent_id: AGENT, user_id: USER } : {}) }));
     return { content: [{ type: "text", text: r.context || "(память пуста)" }] };
   },
 );
@@ -98,7 +115,7 @@ server.tool(
   {},
   async (args, extra) => {
     const session = extra?.sessionId || sessionOf({});
-    const r = JSON.parse(await gw("/session/end", { session_key: session }));
+    const r = JSON.parse(await gw("/session/end", { session_key: session, ...(TEAM && AGENT ? { team_id: TEAM, agent_id: AGENT } : {}) }));
     return { content: [{ type: "text", text: `flushed=${r.flushed}, сессия=${session}` }] };
   },
 );
