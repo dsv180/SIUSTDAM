@@ -62,6 +62,7 @@ import { validateAndNormalizeRaw, SeedValidationError } from "../core/seed/input
 import { executeSeed } from "../core/seed/seed-runtime.js";
 import type { SeedProgress } from "../core/seed/types.js";
 import { handleV2Route, errorEnvelope, makeRequestId } from "./v2-router.js";
+import { handleMcpPost } from "./mcp-endpoint.js";
 import { handleConnectRoute } from "./connect-router.js";
 import type { V2RouterDeps } from "./v2-router.js";
 import { handleV3MetaRoute, V3_PREFIX } from "../metadata/router/v3-meta-router.js";
@@ -1198,6 +1199,28 @@ export class TdaiGateway {
         extraRoutes,
       );
       if (handled) return;
+
+      // [pilot-patch] MCP-эндпоинт — единый штатный интерфейс памяти
+      // (модуль «mcp-подключение», решение заказчика 08.11). Streamable-HTTP,
+      // stateless JSON; инструменты идут через v3-обработчики с изоляцией
+      // из заголовков x-tdai-* либо из дефолтов TDAI_MCP_*.
+      if (pathname === "/mcp") {
+        if (method !== "POST") {
+          sendError(res, 405, "Use POST /mcp");
+          return;
+        }
+        return await handleMcpPost(req, res, {
+          v2Deps: mergedDeps as V2RouterDeps,
+          serviceId: "default",
+          core: this.core,
+          logger: this.logger,
+          defaultIsolation: {
+            teamId: process.env.TDAI_MCP_TEAM_ID || "default",
+            agentId: process.env.TDAI_MCP_AGENT_ID || "default",
+            userId: process.env.TDAI_MCP_USER_ID || "default",
+          },
+        });
+      }
 
       // ── v1 API routes ──
 

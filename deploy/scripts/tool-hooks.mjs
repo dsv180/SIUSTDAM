@@ -5,29 +5,16 @@
 // По умолчанию (решение заказчика 01.11.2026) пишутся ТОЛЬКО ошибки:
 // цель контура — ошибки не должны повторяться, успешные вызовы — шум.
 // Включить запись успешных: TDAI_TOOL_CAPTURE_SUCCESS=1
+// 08.11.2026 (модуль «mcp-подключение», W5): запись через MCP-сервер шлюза
+// (инструмент memory_capture), не напрямую через его HTTP API.
 
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { mcpCall } from "./mcp-client.mjs";
 
 const MODE = process.argv[2] === "fail" ? "fail" : "ok";
-const FILE = (() => { try { return JSON.parse(readFileSync(path.join(homedir(), ".zcode", "tdai-memory.json"), "utf8")); } catch { return {}; } })();
-const GW = (process.env.TDAI_GATEWAY_URL || FILE.gatewayUrl || "http://127.0.0.1:8420").replace(/\/$/, "");
-const USER = process.env.TDAI_USER_ID || FILE.userId || process.env.USERNAME || "user";
-// 08.11.2026: запись переведена на v3 /conversation/add — реплики штампуются
-// team/agent/user пространства «Отдел поддержки 1С» и видны в панели сразу.
-const TEAM = process.env.TDAI_TEAM_ID || FILE.teamId || "";
-const AGENT = process.env.TDAI_AGENT_ID || FILE.agentId || "";
-const SERVICE = process.env.TDAI_SERVICE_ID || FILE.serviceId || "default";
-const SESSION = `tool-${MODE}-${USER}-${new Date().toISOString().slice(0, 10)}`;
+const USER = process.env.TDAI_USER_ID || "user";
+const SESSION = `tool-${MODE}-${USER}-${new Date().toISOString().slice(0, 10)}-${randomUUID().slice(0, 8)}`;
 const CAPTURE_SUCCESS = process.env.TDAI_TOOL_CAPTURE_SUCCESS === "1";
-const KEY = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || "";
-const HEAD = {
-  "Content-Type": "application/json; charset=utf-8",
-  ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
-  "x-tdai-service-id": SERVICE,
-  ...(TEAM && AGENT ? { "x-tdai-team-id": TEAM, "x-tdai-agent-id": AGENT, "x-tdai-user-id": USER } : {}),
-};
 
 function out(obj) { process.stdout.write(JSON.stringify(obj)); }
 function silent(msg) { process.stderr.write(`[tdam-tool-hook/${MODE}] ${msg}\n`); process.exit(0); }
@@ -59,28 +46,18 @@ const userContent = isError
   : `Вызов инструмента «${tool}»: ${excerpt(input, 250)} → ${excerpt(output, 250)}`;
 
 try {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-  const res = await fetch(GW + "/v3/conversation/add", {
-    method: "POST",
-    headers: HEAD,
-    body: JSON.stringify({
-      session_id: SESSION,
-      messages: [
-        { role: "user", content: userContent },
-        { role: "assistant", content: isError
-          ? "(автофиксация отказа инструмента — в память, чтобы не повторять)"
-          : "(автофиксация вызова инструмента)" },
-      ],
-    }),
-    signal: controller.signal,
+  const text = await mcpCall("memory_capture", {
+    user_content: userContent,
+    assistant_content: isError
+      ? "(автофиксация отказа инструмента — в память, чтобы не повторять)"
+      : "(автофиксация вызова инструмента)",
+    session_id: SESSION,
   });
-  clearTimeout(timer);
-  if (!res.ok) silent(`gateway HTTP ${res.status}`);
-  const j = await res.json();
+  if (text === null) silent(`MCP-сервер недоступен или вернул ошибку`);
   out({}); // пустой валидный вывод: тур не блокируем
-  process.stderr.write(`[tdam-tool-hook/${MODE}] записано (l0=${(j.data?.accepted_ids || []).length}): ${tool}\n`);
+  const m = /l0=(\d+)/.exec(text || "");
+  process.stderr.write(`[tdam-tool-hook/${MODE}] записано (l0=${m ? m[1] : "?"}): ${tool}\n`);
   process.exit(0);
 } catch (e) {
-  silent(`gateway недоступен: ${e.message}`);
+  silent(`ошибка: ${e.message}`);
 }
