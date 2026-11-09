@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDAM — командная память отдела · интерактивная документация</title>
+<style>
+:root{
+  --bg:#0f141a; --panel:#151c25; --panel2:#1a2330; --text:#d9e2ee; --muted:#8fa1b5;
+  --accent:#4da3ff; --accent2:#5fd6a9; --warn:#e8b45a; --danger:#e87f7f;
+  --border:#233142; --code-bg:#0b1016; --shadow:0 2px 10px rgba(0,0,0,.35);
+  --dg-box:#1a2534; --dg-box2:#21303f; --dg-border:#3d5470; --dg-line:#4a6a8f; --dg-hl:#4da3ff;
+}
+html[data-theme="light"]{
+  --bg:#f4f7fb; --panel:#ffffff; --panel2:#eef3f9; --text:#1d2a38; --muted:#5c6f84;
+  --accent:#0b6ecf; --accent2:#0f9d6a; --warn:#b07818; --danger:#c0504d;
+  --border:#d8e2ee; --code-bg:#e9eff6; --shadow:0 2px 8px rgba(30,50,80,.12);
+  --dg-box:#ffffff; --dg-box2:#e8f0fa; --dg-border:#9fb4cc; --dg-line:#7f97b3; --dg-hl:#0b6ecf;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:15px/1.65 "Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:.92em;background:var(--code-bg);padding:1px 6px;border-radius:5px;border:1px solid var(--border)}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px 44px 14px 16px;overflow-x:auto}
+pre code{background:none;border:none;padding:0;font-size:.9em;line-height:1.55}
+.copybtn{position:absolute;top:8px;right:8px;background:var(--panel2);color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer;opacity:.75}
+.copybtn:hover{opacity:1;color:var(--text)}
+/* ─── каркас ─── */
+#layout{display:flex;min-height:100vh}
+#sidebar{width:300px;flex:0 0 300px;background:var(--panel);border-right:1px solid var(--border);padding:18px 14px 30px;position:sticky;top:0;height:100vh;overflow-y:auto}
+#main{flex:1;min-width:0;padding:34px 48px 90px}
+.wrap{max-width:980px;margin:0 auto}
+#sbToggle{display:none;position:fixed;z-index:60;top:12px;left:12px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;cursor:pointer;font-size:16px}
+@media(max-width:1050px){
+  #sidebar{position:fixed;z-index:50;left:-320px;transition:left .25s;box-shadow:var(--shadow)}
+  #sidebar.open{left:0}
+  #sbToggle{display:block}
+  #main{padding:52px 20px 80px}
+}
+/* ─── сайдбар ─── */
+#logo{font-weight:700;font-size:17px;letter-spacing:.2px;margin:2px 6px 2px;cursor:pointer}
+#logo:hover{color:var(--accent)}
+#logo small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:3px}
+#searchbox{margin:14px 4px 10px;position:relative}
+#searchbox input{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 11px;font-size:13.5px;outline:none}
+#searchbox input:focus{border-color:var(--accent)}
+#searchres{position:absolute;top:100%;left:0;right:0;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);max-height:52vh;overflow-y:auto;display:none;z-index:80}
+#searchres .sr{display:block;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer}
+#searchres .sr:hover{background:var(--panel2)}
+#searchres .sr b{color:var(--accent);font-weight:600}
+#searchres .sr .loc{color:var(--muted);font-size:11.5px;display:block}
+nav#toc{margin-top:8px}
+nav#toc details{margin:2px 0}
+nav#toc summary{list-style:none;cursor:pointer;padding:6px 10px;border-radius:8px;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:7px;color:var(--text)}
+nav#toc summary::-webkit-details-marker{display:none}
+nav#toc summary .chev{color:var(--muted);font-size:10px;transition:transform .15s}
+nav#toc details[open] summary .chev{transform:rotate(90deg)}
+nav#toc summary:hover{background:var(--panel2)}
+nav#toc summary.actsec{background:var(--panel2);color:var(--accent)}
+nav#toc .sub{margin:2px 0 6px}
+nav#toc .sub a{display:block;padding:4px 10px 4px 26px;border-radius:7px;font-size:12.8px;color:var(--muted)}
+nav#toc .sub a:hover{background:var(--panel2);color:var(--text);text-decoration:none}
+nav#toc a.act{color:var(--accent)!important;background:var(--panel2)}
+#sbfoot{margin-top:18px;padding:12px 8px 0;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#themeBtn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12.5px}
+/* ─── контент ─── */
+.hero{background:linear-gradient(135deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--border);border-radius:16px;padding:34px 36px;margin-bottom:26px;box-shadow:var(--shadow)}
+.hero h1{margin:0 0 6px;font-size:30px;line-height:1.25}
+.hero .sub{color:var(--muted);font-size:16px;max-width:760px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:4px 13px;font-size:12.5px;color:var(--muted)}
+.chip b{color:var(--text);font-weight:600}
+section{margin:44px 0 10px}
+section>h2{font-size:23px;margin:0 0 4px;padding-bottom:9px;border-bottom:2px solid var(--border);display:flex;align-items:baseline;gap:12px}
+section>h2 .num{color:var(--accent);font-size:15px;font-weight:700;letter-spacing:.5px}
+section>h2 .num::before{content:"§"}
+.lead{color:var(--muted);margin:8px 0 18px;max-width:840px}
+h3{font-size:17.5px;margin:30px 0 10px}
+h3 .anchor,h2 .anchor{opacity:0;margin-left:8px;font-size:13px}
+h3:hover .anchor,h2:hover .anchor{opacity:.7}
+h4{font-size:15.5px;margin:22px 0 8px;color:var(--accent2)}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:26px}
+li{margin:4px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.8px;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+th,td{border-bottom:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--panel2);font-weight:600;font-size:12.8px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+tr:last-child td{border-bottom:none}
+td code{white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:18px 0}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px 16px;display:block;color:inherit;text-decoration:none;transition:border-color .15s, transform .15s}
+.card:hover{border-color:var(--accent);text-decoration:none}
+.card:hover .go{color:var(--accent)}
+.card .big{font-size:19px;font-weight:700;margin-bottom:5px;color:var(--accent)}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.card .go{display:block;margin-top:9px;font-size:12.5px;color:var(--muted);font-weight:600}
+.note,.warn,.tip{border-left:4px solid var(--accent);background:var(--panel);border-radius:0 10px 10px 0;padding:11px 16px;margin:14px 0;font-size:14px}
+.warn{border-left-color:var(--warn)}
+.tip{border-left-color:var(--accent2)}
+.note b,.warn b,.tip b{display:block;margin-bottom:3px}
+.badge{display:inline-block;background:var(--panel2);border:1px solid var(--border);border-radius:6px;font-size:11.5px;padding:1px 8px;color:var(--muted);vertical-align:middle}
+.badge.ok{color:var(--accent2);border-color:var(--accent2)}
+.badge.pilot{color:var(--warn);border-color:var(--warn)}
+.fig{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin:18px 0;box-shadow:var(--shadow)}
+.fig-diag{background:transparent;border:none;border-radius:0;padding:0;margin:24px 0;box-shadow:none}
+.fig .cap{font-size:12.5px;color:var(--muted);margin-top:10px;text-align:center}
+iframe.diag{width:100%;border:none;display:block;background:transparent}
+.kbd{border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-size:.9em;background:var(--panel2)}
+details.fold{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:0;margin:12px 0}
+details.fold summary{cursor:pointer;padding:11px 16px;font-weight:600;list-style:none}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary::before{content:"▸ ";color:var(--accent)}
+details.fold[open] summary::before{content:"▾ "}
+details.fold .inner{padding:2px 16px 14px;border-top:1px solid var(--border)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:16px 0}
+.shots figure{margin:0;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.shots img{width:100%;display:block}
+.shots figcaption{padding:7px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--border)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.cols2{grid-template-columns:1fr}}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+mark{background:rgba(77,163,255,.28);color:inherit;border-radius:3px;padding:0 2px}
+html[data-theme="light"] mark{background:rgba(11,110,207,.18)}
+#topBtn{position:fixed;right:22px;bottom:22px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 13px;cursor:pointer;display:none;box-shadow:var(--shadow);z-index:40}
+hr{border:none;border-top:1px solid var(--border);margin:26px 0}
+/* ─── SVG-диаграммы ─── */
+.fig svg{width:100%;height:auto;display:block}
+.dbox{fill:var(--dg-box);stroke:var(--dg-border);stroke-width:1.3;rx:9}
+.dbox2{fill:var(--dg-box2);stroke:var(--dg-border);stroke-width:1.3}
+.dgrp{fill:none;stroke:var(--dg-border);stroke-width:1.1;stroke-dasharray:6 4;rx:12}
+.dline{stroke:var(--dg-line);stroke-width:1.5;fill:none}
+.dtxt{fill:var(--text);font-size:12.5px;font-family:"Segoe UI",sans-serif}
+.dtxtB{fill:var(--text);font-size:13px;font-weight:600;font-family:"Segoe UI",sans-serif}
+.dmut{fill:var(--muted);font-size:11px;font-family:"Segoe UI",sans-serif}
+.dacc{fill:var(--dg-hl);font-weight:700;font-family:"Segoe UI",sans-serif}
+.dzone{fill:var(--muted);font-size:11.5px;font-weight:700;letter-spacing:.6px;font-family:"Segoe UI",sans-serif}
+</style>
+</head>
+<body>
+<button id="sbToggle" title="Меню">☰</button>
+<div id="layout">
+<aside id="sidebar">
+  <div id="logo">TDAM · Документация<small>командная память отдела · SIUSTDAM</small></div>
+  <div id="searchbox"><input id="search" type="search" placeholder="Поиск по документации…" autocomplete="off"><div id="searchres"></div></div>
+  <nav id="toc"></nav>
+  <div id="sbfoot"><button id="themeBtn">◐ Тема</button><span id="docVer">ред. 2026-11-10</span></div>
+</aside>
+<main id="main"><div class="wrap">
+
+<div class="hero" id="top">
+  <h1>TDAM — TencentDB Agent Memory</h1>
+  <div class="sub">Единая память отдела: все диалоги сотрудников и агентов пишутся в одно хранилище, и каждый новый диалог автоматически получает из него самое релевантное. Интерактивная документация по принципам работы, архитектуре, развёртыванию и нашим доработкам (форк <b>SIUSTDAM</b>).</div>
+  <div class="chips">
+    <span class="chip">Вендорская база: <b>TencentDB Agent Memory v2.0.0</b></span>
+    <span class="chip">Наш форк: <b>github.com/dsv180/SIUSTDAM</b> · ветка <b>pilot-patches</b></span>
+    <span class="chip">Статус: <b>опытная эксплуатация</b> (сервер SRV-1-1, с 2026-11-09)</span>
+    <span class="chip">Онлайн: <b>http://10.30.23.20:8788/</b> (служба TDAM-Docs)</span>
+    <span class="chip">Панель: <b>127.0.0.1:8123</b> · Схема развёртывания: <b>127.0.0.1:8777</b></span>
+  </div>
+</div>
+
+<div class="cards" id="quick">
+  <a class="card" href="#s1"><div class="big">Зачем всё это</div><p>Одна общая память отдела: диалоги всех сотрудников и агентов попадают в одно хранилище, а каждый новый диалог автоматически получает из него самое нужное.</p><span class="go">Что такое TDAM →</span></a>
+  <a class="card" href="#s2"><div class="big">Как работает</div><p>Запись: сначала всё дословно, разбор — потом. Чтение: в диалог впрыскивается только релевантное. Слои от сырых реплик до персоны.</p><span class="go">Принципы работы →</span></a>
+  <a class="card" href="#s2-5"><div class="big">Как ищет</div><p>Находит и по словам, и по смыслу: полнотекстовый поиск с русским стеммером плюс векторный. Порог релевантности отсекает шум.</p><span class="go">Гибридный поиск →</span></a>
+  <a class="card" href="#s2-7"><div class="big">Рабочие типы</div><p>Уроки из ошибок, задачи и артефакты записываются командными типами work_* — пойманное на одной машине становится общим для всех.</p><span class="go">Командный режим →</span></a>
+  <a class="card" href="#s4"><div class="big">Где развёрнуто</div><p>Два инстанса: рабочая машина (пилот) и сервер SRV-1-1 — пять служб Windows с автозапуском, без входа пользователя.</p><span class="go">Развёртывание →</span></a>
+  <a class="card" href="#s5"><div class="big">Панель и руководство</div><p>Memory Hub в браузере: команда, агенты, скиллы, Wiki и память. Вход — по личному user_key, который выдаёт администратор.</p><span class="go">Руководство →</span></a>
+</div>
+
+<section id="s1" data-nav="1. Что такое TDAM">
+<h2><span class="num">1</span>Что такое TDAM</h2>
+<p class="lead">Раздел основан на документации авторов проекта (перевод и пересказ их README) и описывает замысел системы.</p>
+
+<h3>Зачем это нужно</h3>
+<p>Авторы начинают с практического вопроса: <b>как сократить повторяющуюся работу при использовании агентов?</b> Если контекст проекта уже был объяснён — не нужно повторять его в новой сессии. Если документы уже прочитаны — каждому агенту не нужно начинать с первой страницы. Рабочий процесс, который уже работает, не нужно заново изобретать в следующий раз.</p>
+<p>Память здесь — больше, чем «запоминание разговоров»: <b>любая информация, которая помогает следующему агенту не изобретать велосипед, сохраняется, организуется и переиспользуется.</b></p>
+<pre><code>Существующая информация → Переиспользуемые активы памяти →
+→ Меньше ходов → Меньше переделок → Стабильнее результаты и выше эффективность</code></pre>
+
+<h3>Накопленный опыт передаётся следующему агенту</h3>
+<p><b>Memory Hub</b> для команд агентов замыкает цикл всего жизненного пути опыта: работа создаёт активы, активы циркулируют по команде, а новые участники в первый же день загружают «сейв» команды.</p>
+<ul>
+  <li><b>Автоматическое извлечение активов</b>: Chat Memory и скиллы извлекаются из диалогов и задач; документы и код превращаются в Wiki и CodeGraph; затем всем этим управляют, проверяют и маршрутизируют единообразно.</li>
+  <li><b>Переносимость и совместимость с несколькими агентами</b>: активы памяти отвязаны от фреймворков агентов — они переезжают между фреймворками и используются совместно несколькими агентами и участниками.</li>
+  <li><b>Дружелюбие к холодному старту</b>: импортируйте существующие документы, кодовые базы и сессии диалогов — новая команда агентов стартует с уже накопленного опыта, а не учится с нуля.</li>
+</ul>
+
+<h3>Четыре семейства активов памяти</h3>
+<table>
+  <tr><th>Актив</th><th>Что делает</th><th>Цитата авторов</th></tr>
+  <tr><td><b>🧠 Chat Memory</b></td><td>Хранит предпочтения, факты, решения и историю взаимодействий. Каждый агент при создании автоматически получает свою память.</td><td>«Не рефактори старый модуль авторизации — мобильное приложение его ещё использует». Такой дорогой контекст не должен зависеть от того, повторят ли его люди в очередной раз.</td></tr>
+  <tr><td><b>⚡ Скиллы</b></td><td>Библиотека экспертизы: версии, файлы-ресурсы, границы срабатывания, шаги исполнения и правила проверки. Личные скиллы приватны; после проверки открываются команде.</td><td>Разбор инцидентов, ревью кода, чек-листы релизов — выучите один раз, и пользоваться сможет вся команда.</td></tr>
+  <tr><td><b>📖 Wiki</b></td><td>Документация, спеки и регламенты — в структурированные страницы с графом ссылок (вдохновлено «LLM-базой знаний» А. Карпаты).</td><td>Избавляет агентов от чтения всех списков файлов перед началом работы.</td></tr>
+  <tr><td><b>🗺️ CodeGraph</b></td><td>Индексирует символы кода, файлы, связи вызовов и пути влияния.</td><td>Не просто «код здесь», а «изменишь это — может пострадать вот это».</td></tr>
+</table>
+
+<h3>Активы памяти, а не склад логов чатов</h3>
+<p>RAG отвечает на вопрос «что можно найти?». Командная память отвечает ещё и на вопросы «кто может этим пользоваться, какая версия актуальна и какому агенту это выдать»:</p>
+<table>
+  <tr><th></th><th>История чатов</th><th>Обычный RAG</th><th>TDAM</th></tr>
+  <tr><td>Межсессовое понимание пользователя</td><td>△</td><td>△</td><td>✅ Chat Memory</td></tr>
+  <tr><td>Дистиллированный исполняемый опыт</td><td>—</td><td>—</td><td>✅ Скилл</td></tr>
+  <tr><td>Структура и связи документов</td><td>—</td><td>△ поиск фрагментов</td><td>✅ Wiki + граф ссылок</td></tr>
+  <tr><td>Графы вызовов кода и охват влияния</td><td>—</td><td>△ текстовый поиск</td><td>✅ CodeGraph</td></tr>
+  <tr><td>Владелец / версия / статус</td><td>—</td><td>—</td><td>✅</td></tr>
+  <tr><td>Командный доступ и снаряжение агентов</td><td>—</td><td>—</td><td>✅</td></tr>
+  <tr><td>Приватное / командное / ACL</td><td>—</td><td>△</td><td>✅</td></tr>
+</table>
+
+<h3>Эффективность (бенчмарк авторов)</h3>
+<p>Бенчмарк <b>PersonaMem</b> проверяет, способен ли агент корректно понять и применить информацию о пользователе после длительных взаимодействий: без памяти — 48%, с включённой памятью — <b>76%</b> (+59% относительно).</p>
+
+<div class="note"><b>Наш контекст.</b> Мы используем TDAM как командную память отдела поддержки 1С: команда «Отдел поддержки 1С», агенты ZCode, память общая для сотрудников (вход по user_key, выдаёт администратор). Авторам проекта — спасибо за продуманную архитектуру; всё нижеследующее о принципах — их заслуга, наши адаптации отдельно отмечены в §6.</div>
+</section>
+
+<section id="s2" data-nav="2. Принципы работы">
+<h2><span class="num">2</span>Принципы работы</h2>
+<p class="lead">Как устроена память изнутри: два контура, четыре слоя, конвейер обработки, гибридный поиск и правила доступа. Схемы — интерактивная переработка наших документов и описания авторов.</p>
+
+<h3 id="s2-1">Двухконтурная память</h3>
+<p>Ключевой принцип — <b>память двухконтурная</b>:</p>
+<ul>
+  <li><b>Контур записи</b> — «сначала всё, потом разбор»: каждый диалог дословно сыпется в хранилище, а фоновый конвейер с помощью LLM перегоняет сырьё в компактные знания.</li>
+  <li><b>Контур чтения</b> — «не всё, а релевантное»: в начало диалога впрыскивается краткая сводка (кто вы для меня, чем занимались), к каждой реплике — памятки по её теме.</li>
+</ul>
+<p>Человек видит только результат; вся механика — автоматическая. Центральный узел — <b>Gateway</b>: единственная точка, которая умеет и писать, и читать, и запускать конвейер. Клиенты никогда не трогают файлы хранилища напрямую.</p>
+
+<div class="fig fig-diag">
+<iframe class="diag" src="диаграммы/tdam-system.html" title="Архитектура TDAM: клиенты, шлюз, хранилище, помощники ядра" loading="lazy" style="height:640px"></iframe>
+<div class="cap">Архитектура TDAM: клиенты работают только через Gateway; хранилище — SQLite (L0/L1), векторы, сцены и персона; «мозг» и Ollama — помощники ядра. Схема интерактивна: тема, стиль, путь и экспорт — на её панели. <a href="диаграммы/tdam-system.html" target="_blank">Полная интерактивная версия →</a></div>
+</div>
+
+<h3 id="s2-2">Слои памяти L0–L3</h3>
+<p>Сырьё и знания разделены на четыре слоя — от «сырого» к «осмысленному» (терминология авторов: Диалог → Атом → Сценарий → Персона):</p>
+<table>
+  <tr><th>Слой</th><th>Что это</th><th>Типы записей</th><th>Аналогия</th><th>Где живёт</th></tr>
+  <tr><td><b>L0</b> Диалог</td><td>Дословные реплики всех диалогов, полный контекст</td><td>—</td><td>протокол стенографистки</td><td>SQLite</td></tr>
+  <tr><td><b>L1</b> Атом</td><td>Атомарные памятки: факты, правила, события; приоритет 0–100</td><td><code>persona</code> / <code>episodic</code> / <code>instruction</code>; в командном режиме ещё <code>work_*</code> (§2.7)</td><td>стикеры на доске</td><td>SQLite</td></tr>
+  <tr><td><b>L2</b> Сценарий</td><td>Сцены — тематические блоки контекста по проектам/темам</td><td>md-файлы сцен</td><td>папки дел</td><td><code>scene_blocks\</code></td></tr>
+  <tr><td><b>L3</b> Персона</td><td>Долгосрочный профиль: архетип, предпочтения, наблюдения</td><td>—</td><td>досье</td><td><code>persona.md</code></td></tr>
+</table>
+<p>Движение информации — только вверх: L0 → L1 → L2 → L3, каждый слой делает следующий компактнее и обобщённее. Обратно ничего не течёт: сцены и персона — это <i>обобщение</i> памяток, а не их замена.</p>
+
+<h3 id="s2-3">Контур записи: как реплика становится знанием</h3>
+<div class="fig fig-diag">
+<iframe class="diag" src="диаграммы/write-pipeline.html" title="Конвейер записи: от реплики до персоны" loading="lazy" style="height:640px"></iframe>
+<div class="cap">Конвейер записи: L1-экстракция — один вызов LLM на пачку диалогов; дедуп — второй вызов; сцены и персона — обобщения памяток. <a href="диаграммы/write-pipeline.html" target="_blank">Полная интерактивная версия →</a></div>
+</div>
+
+<h3 id="s2-4">Контур чтения: как память попадает в диалог</h3>
+<div class="fig fig-diag">
+<iframe class="diag" src="диаграммы/read-flow.html" title="Контур чтения: подводка памяти к диалогу" loading="lazy" style="height:640px"></iframe>
+<div class="cap">Контур чтения: две автоматические подводки памяти (старт диалога и каждая реплика) плюс контур ошибок инструментов. <a href="диаграммы/read-flow.html" target="_blank">Полная интерактивная версия →</a></div>
+</div>
+
+<h3 id="s2-5">Поиск: гибрид двух механизмов</h3>
+<div class="fig fig-diag">
+<iframe class="diag" src="диаграммы/hybrid-search.html" title="Гибридный поиск: слова + смысл" loading="lazy" style="height:560px"></iframe>
+<div class="cap">Гибридный поиск: полнотекстовый канал (BM25 + Snowball) и семантический (векторы), слияние рангов, порог релевантности. <a href="диаграммы/hybrid-search.html" target="_blank">Полная интерактивная версия →</a></div>
+</div>
+
+<h3 id="s2-6">Активы памяти и управление доступом</h3>
+<p>Все активы (Chat Memory, скиллы, Wiki, CodeGraph) регистрируются единообразно. Memory Hub через <b>фиксированную привязку + ACL</b> определяет, какими активами данный агент может пользоваться: сначала сужается круг разрешений по команде, пользователю, агенту и видимости, затем поиск выполняется по текущему запросу. Знания не впрыскиваются целиком — они вызываются по требованию.</p>
+<table>
+  <tr><th>Видимость</th><th>Семантика (из описания авторов)</th></tr>
+  <tr><td><code>private</code></td><td>Читать может только владелец — даже админам команды недоступно</td></tr>
+  <tr><td><code>team</code></td><td>Участники команды могут читать; управлять — владелец / админ</td></tr>
+  <tr><td><code>restricted</code></td><td>Точечный доступ через ACL: пользователи / роли / агенты</td></tr>
+  <tr><td><code>agent</code></td><td>Адресное снаряжение агентов внутри одной команды</td></tr>
+</table>
+<p>Роли двух уровней: <b>глобальный системный администратор</b> управляет пользователями и командами; <b>роли уровня команды</b> — админ (управляющий командой) и участник. Принадлежность актива отслеживается через владельца: владелец автоматически имеет права управления своими активами.</p>
+
+<h3 id="s2-7">Командный режим извлечения (prompts.mode = code)</h3>
+<p>Наша доработка режима работы памяти: конвейер извлечения переводится на <b>командные рабочие типы</b> — урок, пойманный на одном рабочем месте, становится общим для всех машин:</p>
+<table>
+  <tr><th>Тип</th><th>Что пишется</th></tr>
+  <tr><td><code>work_fact</code></td><td>Устойчивые факты об инфраструктуре, конфигурациях, правилах</td></tr>
+  <tr><td><code>work_task</code></td><td>Текущие задачи и их состояние</td></tr>
+  <tr><td><code>work_method</code></td><td>Уроки из ошибок — общим каналом (главная ценность: чтобы не повторялись)</td></tr>
+  <tr><td><code>work_artifact</code></td><td>Созданные артефакты и их расположение</td></tr>
+</table>
+<p class="muted small">Старые типы (persona / episodic / instruction) сохраняются и продолжают пополняться. Режим включается в gateway-config.yaml (<code>prompts.mode: "code"</code>) — машинно-зависимая настройка, на каждой машине отдельно.</p>
+
+<h3 id="s2-8">Подпись и единое пространство (правило от 08.11.2026)</h3>
+<ul>
+  <li>Память команды <b>едина</b>: «ничьих», дефолтных пространств нет. Каждая запись обязана иметь владельца — тройку «команда → агент → пользователь».</li>
+  <li><b>Запись без подписи запрещена</b> — запрет реализован в коде на шлюзе (закрытие неподписанных путей), а не в правилах агента: правила содержат только положительный контракт.</li>
+  <li>Агент получает подпись <b>декларацией</b> (конфигурация канала), не автодетектом: кто агент — решает конфигурация.</li>
+  <li><b>Личный пул агента</b> — штатное следствие подписи: отдельный агент = отдельный пул; общий опыт — командный слой, выдаваемый по правам.</li>
+</ul>
+</section>
+
+<section id="s3" data-nav="3. Архитектура и узлы">
+<h2><span class="num">3</span>Архитектура и узлы</h2>
+<p class="lead">Портреты узлов системы, хранилище, каналы доступа и конфигурация. Всё основано на реальном развёртывании.</p>
+
+<h3 id="s3-1">Узлы системы</h3>
+<table>
+  <tr><th>Узел</th><th>Роль</th><th>Порт</th></tr>
+  <tr><td><b>MemoryCore Gateway</b> (служба TDAM-Gateway)</td><td>Ядро: все маршруты API, конвейер L0→L3, дедуп, гибридный поиск, таймер-сканер, подпись записей. Один процесс Node.js.</td><td><code>8420</code></td></tr>
+  <tr><td><b>Панель Memory Hub</b> (TDAM-Panel)</td><td>Веб-панель: команда, участники, агенты, API-ключи, Wiki, CodeGraph, скиллы, Chat_Память. Прод-сборка раздаётся backend'ом.</td><td><code>8123</code></td></tr>
+  <tr><td><b>MCP-over-HTTP</b> (TDAM-MCP)</td><td>Те же инструменты памяти как MCP-сервер для клиентов с поддержкой MCP.</td><td><code>8900</code> (loopback)</td></tr>
+  <tr><td><b>Веб-вьюер</b> (TDAM-Web)</td><td>Read-only просмотр памяти в браузере.</td><td><code>8901</code> (loopback)</td></tr>
+  <tr><td><b>Ollama bge-m3</b> (TDAM-Ollama)</td><td>Локальные эмбеддинги для векторного поиска (только на сервере).</td><td><code>11434</code> (loopback)</td></tr>
+  <tr><td><b>«Мозг» — LLM</b></td><td>Внешний канал AITUNNEL (deepseek-v4.1-flash): извлечение и структурирование памяти. Без него запись идёт, знания не рождаются.</td><td>443 наружу</td></tr>
+  <tr><td><b>Memory Proxy</b> <span class="badge">не развёрнут</span></td><td>Авторский вариант подключения IDE через прокси-перед (порт 8096 по умолчанию). В нашем развёртывании агенты подключаются хуками, CLI и MCP напрямую к шлюзу.</td><td>—</td></tr>
+</table>
+
+<h3 id="s3-2">Хранилище</h3>
+<p>Каталог данных задаётся переменной <code>TDAI_DATA_DIR</code> явно (на сервере — <code>D:\TDAM\data</code>), чтобы не зависеть от профиля учётки. Внутри:</p>
+<table>
+  <tr><th>Что</th><th>Файл/папка</th><th>Содержимое</th></tr>
+  <tr><td>Слои L0 и L1</td><td>SQLite-база + дневные журналы <code>records/*.jsonl</code></td><td>Дословные реплики, атомарные памятки, FTS5-индекс</td></tr>
+  <tr><td>Векторы</td><td><code>vectors.db</code></td><td>Эмбеддинги памяток для семантического канала</td></tr>
+  <tr><td>Сцены L2</td><td><code>scene_blocks\*.md</code></td><td>Тематические блоки контекста (переносимы и читаемы)</td></tr>
+  <tr><td>Персона L3</td><td><code>persona.md</code></td><td>Долгосрочный профиль</td></tr>
+</table>
+<div class="tip"><b>Переносимость.</b> Память переносится копированием каталога данных. Смена модели эмбеддингов = полный пере-эмбеддинг корпуса — делать только по результатам корпусного замера; смена модели «мозга» безболезненна (одна строка конфига).</div>
+
+<h3 id="s3-3">Каналы доступа</h3>
+<table>
+  <tr><th>Канал</th><th>Кто запускает</th><th>Когда</th></tr>
+  <tr><td><b>Хуки ZCode</b> (SessionStart, UserPromptSubmit, PostToolUseFailure)</td><td>Клиент, всегда</td><td>Старт диалога → recall; каждая реплика → search; ошибка инструмента → автофиксация в L0</td></tr>
+  <tr><td><b>CLI <code>memory.mjs</code></b></td><td>Агент по скиллу</td><td>Перед рабочим вопросом — search, после содержательного обмена — capture</td></tr>
+  <tr><td><b>HTTP API</b> (Bearer-ключ, <code>x-tdai-service-id</code> для /v2)</td><td>Удалённые агенты, скрипты</td><td>То же самое с любой машины сети</td></tr>
+  <tr><td><b>MCP</b> (<code>:8900</code>)</td><td>Клиенты с MCP</td><td>Инструменты memory_search / memory_capture / memory_recall / conversation_search</td></tr>
+  <tr><td><b>Панель <code>:8123</code> / вьюер <code>:8901</code></b></td><td>Человек</td><td>Просмотр, управление, командная структура</td></tr>
+</table>
+
+<h3 id="s3-4">Конфигурация</h3>
+<p>Два файла на машину (оба — вне git):</p>
+<ul>
+  <li><b><code>gateway-config.yaml</code></b> — конфиг шлюза: порт и хост сервера, каталог данных, режим извлечения (<code>prompts.mode</code>), параметры LLM (baseUrl, модель, maxTokens, таймаут), секции memory (capture/extraction/persona/pipeline/recall/storeBackend/embedding) и skill (routing/extraction/resources), BM25-язык.</li>
+  <li><b><code>gateway.env</code></b> — все секреты в одном файле (не в git, не в реестре, не в системных переменных): ключ LLM (<code>TDAI_LLM_API_KEY</code>), служебный Bearer-ключ шлюза (<code>TDAI_GATEWAY_API_KEY</code>), ключ администратора панели (<code>TDAI_ADMIN_USER_KEY</code>), путь данных (<code>TDAI_DATA_DIR</code>). Запускалки служб читают его при старте и передают значения процессам. <span class="badge pilot">Комментарии в файле — только на отдельных строках: хвостовой комментарий делает ключ «мёртвым».</span></li>
+</ul>
+<div class="warn"><b>Конфиги машин РАЗНЫЕ — намеренно.</b> Рабочая машина: эмбеддинги через AITUNNEL (1536 измерений). Сервер SRV-1-1: локальная Ollama bge-m3 (1024). Подмена конфига между машинами сломает векторный поиск по накопленным векторам (другая размерность). Тема закрыта и не поднимается.</div>
+
+<h3 id="s3-5">Безопасность и границы</h3>
+<ul>
+  <li>Все сервисы локальные; наружу выставляются только <b>шлюз :8420</b> (Bearer-ключ на каждый запрос, кроме /health) и <b>панель :8123</b> (собственная авторизация по user_key). MCP :8900 и вьюер :8901 — loopback.</li>
+  <li>Для /v2-маршрутов нужен и Bearer, и заголовок <code>x-tdai-service-id</code> — одного ключа мало.</li>
+  <li>Память общая: пишут все — читают все (в пределах прав видимости активов). Персональные данные, пароли и ключи в память не записываются (дисциплина, закреплённая в стандарте §7 и в mem-правилах).</li>
+  <li>Память — источник гипотез: найденное стоит сверять с актуальными документами.</li>
+</ul>
+</section>
+
+<section id="s4" data-nav="4. Развёртывание">
+<h2><span class="num">4</span>Развёртывание</h2>
+<p class="lead">Два инстанса TDAM: рабочая машина (пилот) и сервер отдела SRV-1-1 (опытная эксплуатация). Код общий — через репозиторий SIUSTDAM; данные у каждой машины свои.</p>
+
+<h3 id="s4-1">Два инстанса</h3>
+<table>
+  <tr><th></th><th>Рабочая машина (10.30.37.95)</th><th>Сервер SRV-1-1 (10.30.23.20)</th></tr>
+  <tr><td>Роль</td><td>Пилот, разработка и настройка</td><td>Опытная эксплуатация для отдела (Windows Server 2019)</td></tr>
+  <tr><td>Репозиторий</td><td><code>E:\LocalGit\TencentDB-Agent-Memory</code> (головной, push в sync)</td><td><code>D:\.LocalGit\SIUSTDAM</code> (клон, pull)</td></tr>
+  <tr><td>Стык</td><td><code>C:\TDAM</code> (junction <code>agent-memory</code> → клон)</td><td><code>C:\TDAM</code> (junction <code>agent-memory</code> → клон)</td></tr>
+  <tr><td>Данные</td><td><code>~\.memory-tencentdb\</code></td><td><code>D:\TDAM\data</code> (TDAI_DATA_DIR)</td></tr>
+  <tr><td>Эмбеддинги</td><td>AITUNNEL text-embedding-3-small, 1536 dim</td><td>Локальная Ollama bge-m3, 1024 dim <span class="badge ok">основной канал</span></td></tr>
+  <tr><td>«Мозг» LLM</td><td colspan="2">AITUNNEL · deepseek-v4.1-flash (ключ владельца — только в gateway.env)</td></tr>
+  <tr><td>Автозапуск</td><td>4 Startup-ярлыка <code>tdam-*.lnk</code> (идемпотентные лаунчеры)</td><td>5 служб NSSM (запуск при загрузке, без входа пользователя)</td></tr>
+  <tr><td>Наружу</td><td>Шлюз :8420, панель :8123/:5173 — в LAN</td><td>Только шлюз :8420 и панель :8123 — пилотно из <code>10.30.37.0/24</code></td></tr>
+  <tr><td>Обмен</td><td colspan="2">Код — GitHub (sync); данные памяти — не синхронизируются между машинами автоматически</td></tr>
+</table>
+
+<h3 id="s4-2">Топология сервера</h3>
+<div class="fig fig-diag">
+<iframe class="diag" src="tdam-srv-1-1-architecture.html" title="Интерактивная схема развёртывания TDAM на SRV-1-1" loading="lazy" style="height:640px"></iframe>
+<div class="cap">Рис. 5. Полная интерактивная схема развёртывания на SRV-1-1: службы, порты, доступ, потоки (Archify). Копия файла: tdam-srv-1-1-architecture.html рядом с документом; также на сервере в D:\TDAM-Документация. <a href="tdam-srv-1-1-architecture.html" target="_blank">Полная интерактивная версия →</a></div>
+</div>
+
+<h3 id="s4-3">Службы Windows (NSSM) на сервере</h3>
+<table>
+  <tr><th>Служба</th><th>Запускает</th><th>Порт</th><th>Зависит от</th></tr>
+  <tr><td>TDAM-Ollama</td><td><code>cmd /c D:\TDAM\ollama-serve.cmd</code></td><td>11434 (localhost)</td><td>—</td></tr>
+  <tr><td>TDAM-Gateway</td><td><code>powershell -File D:\TDAM\gateway-run.ps1</code></td><td>8420</td><td>TDAM-Ollama</td></tr>
+  <tr><td>TDAM-MCP</td><td><code>powershell -File D:\TDAM\mcp-run.ps1</code></td><td>8900 (localhost)</td><td>TDAM-Gateway</td></tr>
+  <tr><td>TDAM-Web</td><td><code>powershell -File D:\TDAM\web-run.ps1</code></td><td>8901 (localhost)</td><td>TDAM-Gateway</td></tr>
+  <tr><td>TDAM-Panel</td><td><code>powershell -File D:\TDAM\panel-run.ps1</code></td><td>8123</td><td>TDAM-Gateway</td></tr>
+  <tr><td>TDAM-Docs</td><td><code>powershell -File D:\TDAM\docs-run.ps1</code></td><td>8788</td><td>— (не зависит от узлов памяти)</td></tr>
+</table>
+<p>Каждая служба запускает <b>скрипт-обёртку с фиксированным именем</b> в <code>D:\TDAM</code>: тело обёртки можно менять в любой момент, не пересоздавая службу. Обёртка держит процесс <b>в переднем плане</b> (без <code>Start-Process</code>-детача — иначе процесс тихо гаснет, находка 19). NSSM супервизит процесс и перезапускает при сбое; логи stdout/stderr — в <code>D:\TDAM\logs\</code> с ротацией 10 МБ. Учётка служб — LocalSystem.</p>
+
+<h3 id="s4-4">Раскладка на дисках сервера</h3>
+<table>
+  <tr><th>Что</th><th>Путь</th></tr>
+  <tr><td>Клон проекта</td><td><code>D:\.LocalGit\SIUSTDAM</code> (ветка pilot-patches)</td></tr>
+  <tr><td>Стык (рабочие скрипты)</td><td><code>C:\TDAM</code> — внутри junction <code>agent-memory</code> → клон; <code>gateway-config.yaml</code>, <code>gateway.env</code>, node.exe</td></tr>
+  <tr><td>Данные памяти</td><td><code>D:\TDAM\data</code></td></tr>
+  <tr><td>Модели Ollama</td><td><code>D:\TDAM\ollama-models</code></td></tr>
+  <tr><td>Логи служб</td><td><code>D:\TDAM\logs\</code> (+ журналы запускалок в <code>C:\TDAM</code>)</td></tr>
+  <tr><td>Инсталляторы</td><td><code>D:\install\&lt;продукт&gt;</code> — правило: качаем сюда и ставим из этой папки</td></tr>
+  <tr><td>Документация</td><td><code>D:\TDAM-Документация</code> (9 файлов + схема)</td></tr>
+</table>
+
+<h3 id="s4-5">Сеть и доступ</h3>
+<table>
+  <tr><th>Порт</th><th>Служба</th><th>Доступ</th></tr>
+  <tr><td>22</td><td>OpenSSH Server</td><td>вход по ключу, только из 10.30.37.0/24</td></tr>
+  <tr><td>8420</td><td>Gateway</td><td><b>пилот: только из 10.30.37.0/24</b>; Bearer-ключ обязателен (кроме /health)</td></tr>
+  <tr><td>8123</td><td>Панель</td><td><b>пилот: только из 10.30.37.0/24</b>; авторизация по user_key</td></tr>
+  <tr><td>8900 / 8901</td><td>MCP / вьюер</td><td>только localhost</td></tr>
+  <tr><td>11434</td><td>Ollama</td><td>только localhost</td></tr>
+</table>
+<p>Правила брандмауэра: <code>TDAM-SSH-22</code>, <code>TDAM-Gateway-8420</code>, <code>TDAM-Panel-8123</code> (профиль Any, источник 10.30.37.0/24). Проверено с рабочей машины: health ok, панель HTTP 200.</p>
+
+<h3 id="s4-6">Установка с нуля (порядок)</h3>
+<details class="fold"><summary>Полная последовательность развёртывания (Windows, PowerShell от администратора)</summary><div class="inner">
+<ol>
+  <li><b>SSH-доступ</b>: OpenSSH Server (MSI) + ключ агента + правило 22 из подсети.</li>
+  <li><b>Node и Git</b>: MSI/exe в <code>D:\install\nodejs</code> и <code>D:\install\git</code>, тихая установка, машинно.</li>
+  <li><b>Клон</b>: <code>git clone https://github.com/dsv180/SIUSTDAM.git</code> в <code>D:\.LocalGit</code>, ветка <code>pilot-patches</code>; ремоуты: <code>sync</code> = SIUSTDAM, <code>origin</code> = вендор (push отключён).</li>
+  <li><b>Стык</b>: <code>C:\TDAM</code> + junction <code>agent-memory</code> → клон; скрипты из <code>deploy\scripts</code> → <code>C:\TDAM</code>; конфиг шлюза → <code>C:\TDAM</code> (перезапись — только с <code>--force-config</code>).</li>
+  <li><b>Зависимости — 4 установки npm</b>: в <code>MemoryCore</code>, в <code>C:\TDAM</code>, в <code>MemoryPanel</code>, в <code>MemoryPanel\web</code>; затем сборка панели <code>npm run build</code>. Всегда <code>--registry=https://registry.npmjs.org</code>, не <code>npm ci</code>.</li>
+  <li><b>Конфигурация</b>: <code>gateway.env</code> (ключи — только с разрешения владельца), реестр инстансов панели <code>MemoryPanel\config\metadata-instances.json</code> — строго без BOM.</li>
+  <li><b>VC++ Redistributable</b> (для нативного @node-rs/jieba).</li>
+  <li><b>Ollama</b>: zip-архив → <code>C:\Program Files\Ollama</code> (проверка sha256), <code>OLLAMA_MODELS=D:\TDAM\ollama-models</code>, занос модели bge-m3.</li>
+  <li><b>NSSM</b> → <code>C:\Windows\nssm.exe</code>; пробная служба → боевые службы (автозапуск, зависимости, логи с ротацией).</li>
+  <li><b>Администратор панели</b>: <code>POST /v3/internal/meta/user/init-admin</code> → user_key показывается один раз → в <code>gateway.env</code>.</li>
+  <li><b>Приёмка</b>: health зелёный; capture → end → search находит; панель открывается и полностью русская; MCP initialize отвечает; иероглифов нигде нет.</li>
+</ol>
+</div></details>
+
+<h3 id="s4-7">Обновление кода</h3>
+<pre><code>cd D:\.LocalGit\SIUSTDAM
+git pull sync pilot-patches
+# если менялись зависимости — npm install в нужных папках (MemoryCore, C:\TDAM, MemoryPanel, MemoryPanel\web)
+# если менялся фронт панели — cd MemoryPanel\web ; npm run build
+nssm restart TDAM-Gateway   # перезапуск затронутых служб</code></pre>
+<p class="muted small">Регламент источников — <code>doc\ИНСТРУКЦИЯ-АГЕНТУ-ОБНОВЛЕНИЕ-РЕПОЗИТОРИЯ.md</code>. Обновления приходят из головного репозитория SIUSTDAM (sync); push на вендора отключён.</p>
+</section>
+
+<section id="s5" data-nav="5. Руководство Memory Hub">
+<h2><span class="num">5</span>Руководство Memory Hub</h2>
+<p class="lead">Раздел воспроизводит «Руководство» из веб-панели (кнопка «Руководство» в правом верхнем углу, 127.0.0.1:8123/#/guide) — материал авторов продукта. Наша специфика подключений отмечена врезками.</p>
+
+<h3 id="s5-1">Страницы панели</h3>
+<table>
+  <tr><th>Страница</th><th>Что здесь</th></tr>
+  <tr><td><b>Доска задач</b></td><td>Задачи, привязанные к сессиям и агентам; названия и описания ведутся mem-командами (§5.4)</td></tr>
+  <tr><td><b>Организация → Участники</b></td><td>Люди команды; каждому — свой пользователь и user_key (создаёт админ)</td></tr>
+  <tr><td><b>Организация → Агенты</b></td><td>Агенты команды; каждому назначаются свои активы (снаряжение)</td></tr>
+  <tr><td><b>API-ключи</b></td><td>Ключи для входа участников и для подключаемых IDE</td></tr>
+  <tr><td><b>База знаний Wiki</b></td><td>Структурированные страницы с графом ссылок из документов</td></tr>
+  <tr><td><b>Code_Graph</b></td><td>Индекс кодовых баз: символы, файлы, связи вызовов, пути влияния</td></tr>
+  <tr><td><b>Скиллы</b></td><td>Библиотека дистиллированных процессов: версии, ресурсы, границы срабатывания</td></tr>
+  <tr><td><b>Chat_Память</b></td><td>Памятки и сцены; просмотр и поиск накопленного опыта</td></tr>
+</table>
+<p class="muted small">Ниже — скриншоты реальной панели (пилот: в команде пока один участник и один агент):</p>
+<div class="shots">
+  <figure><img src="скриншоты/shot-board.png" alt="Доска задач Memory Hub" loading="lazy"><figcaption>Доска задач — команда, задачи и привязки сессий</figcaption></figure>
+  <figure><img src="скриншоты/shot-agents.png" alt="Страница Агенты" loading="lazy"><figcaption>Агенты — снаряжение агентов активами (у нас — агент ZCode)</figcaption></figure>
+  <figure><img src="скриншоты/shot-skills.png" alt="Страница Скиллы" loading="lazy"><figcaption>Скиллы — библиотека процессов: импорт, экспорт, привязка за агентом</figcaption></figure>
+  <figure><img src="скриншоты/shot-chat.png" alt="Страница Chat_Память" loading="lazy"><figcaption>Chat_Память — атомарные блоки памяти команды</figcaption></figure>
+  <figure><img src="скриншоты/shot-guide.png" alt="Страница Руководство" loading="lazy"><figcaption>Руководство — вводный гайд, воспроизведён в §5</figcaption></figure>
+</div>
+<h3 id="s5-2">Быстрая настройка (3 шага)</h3>
+<h4>Шаг 1 — Скачать конфиг-пак</h4>
+<p>Кнопка «Скачать конфиг-пак (ZIP)» в руководстве отдаёт архив со скриптами <code>agents/</code> (агентские скиллы и мастер настройки). После скачивания и распаковки команды выполняются из каталога, содержащего папку <code>agents</code>.</p>
+<h4>Шаг 2 — Подключите IDE</h4>
+<ul>
+  <li><b>Прокси:</b> <code>http://127.0.0.1:8096</code> (Memory Proxy; адрес берётся из настроек инстанса).</li>
+  <li><b>Режим:</b> «Обычный» — запросы пересылаются как обычно; «Analyse» — дополнительно анализируется, как найденные активы помогли ответу, и результат возвращается в ответе.</li>
+  <li><b>API Key:</b> тот же ключ, что и для входа в панель (страница «API-ключи»).</li>
+  <li><b>Вариант 1 (рекомендуется) — через скилл:</b> <code>cp -r agents ~/agents</code>, затем промпт агенту: «Прочитай ~/agents/skills/setup-proxy/SKILL.md и проведи меня по шагам из него для настройки подключения агента к Memory Proxy». Агент опросит окружение, запишет конфиг прилагаемым скриптом и спросит, импортировать ли локальные скиллы и историю чатов.</li>
+  <li><b>Вариант 2 — через скрипт:</b> <code>bash agents/setup-proxy.sh</code> — интерактивный мастер: сканирует конфиги, проверяет прокси, пишет выбранный IDE.</li>
+  <li><b>Ручная настройка:</b> в руководстве есть готовые конфиги для Claude Code (<code>~/.claude/settings.json</code>), CodeBuddy, Codex CLI, WorkBuddy, dsh, Hermes, OpenClaw. Схема адреса: <code>http://127.0.0.1:8096/&lt;ide&gt;/default</code>; пример для Claude Code — переменные <code>ANTHROPIC_BASE_URL</code>, <code>ANTHROPIC_AUTH_TOKEN</code>, <code>ANTHROPIC_MODEL</code> в settings.json.</li>
+</ul>
+<h4>Шаг 3 — Импорт истории</h4>
+<pre><code>tsx agents/asset-import.ts --source &lt;agent&gt; --agent-id &lt;id&gt; --team-id &lt;tid&gt;</code></pre>
+<p>Импортирует исторические сессии и скиллы из локальных IDE. Источники: <code>claude-code</code>, <code>codebuddy</code>, <code>codex</code>, <code>workbuddy</code>, <code>dsh</code>, <code>hermes</code>, <code>openclaw</code>. Если импорт уже выбран в конце скрипта-настройщика, повторно запускать не нужно.</p>
+<div class="note"><b>Проверка успеха (из руководства):</b> начните новый диалог в подключённой IDE — при инициализации сессии появится опция «Привязать командные активы?»; ответ «Да» означает, что агент читает командные активы.</div>
+<div class="warn"><b>Наша специфика.</b> В нашем развёртывании узел Memory Proxy не развёрнут: агенты ZCode подключаются к шлюзу памяти напрямую — через хуки (фон), CLI <code>memory.mjs</code> и MCP. Раздел про прокси — авторская схема для IDE (Claude Code и др.); пригодится, если решим подключать такие IDE.</div>
+
+<h3 id="s5-3">Лучшие практики</h3>
+<h4>А. Командное кодирование (сотрудничество и обмен опытом)</h4>
+<p>Цепочка: Несколько IDE · Сессия + Скилл → <b>Участники команды</b> (Пользователь + Агент) → <b>Библиотека общих активов</b> (Память · Скилл · Wiki) → <b>Межплатформенное переиспользование</b> (постоянно обновляется).</p>
+<table>
+  <tr><th>Шаг</th><th>Суть</th><th>Практика</th></tr>
+  <tr><td>1. Единая личность</td><td>Одна командная личность во всех IDE</td><td>Админ создаёт отдельного пользователя и ключ для каждого участника; участники используют свой ключ в Claude Code, CodeBuddy и т.д. Не заводите пользователя на каждую IDE — это расщепляет память и права.</td></tr>
+  <tr><td>2. Импорт истории</td><td>Опыт всех IDE сливается в одно место</td><td>Импортируйте существующие сессии и скиллы; после смены IDE вспоминаются прошлые решения, предпочтения и уроки. Перед импортом исключите ключи, личные данные и нерелевантные чаты.</td></tr>
+  <tr><td>3. Обмен активами</td><td>Команда переиспользует проверенный опыт</td><td>Пишите в память факты проекта, решения и подводные камни; стабильные повторяемые процессы превращайте в скиллы; общие документы и долгосрочные знания — в Wiki. Открывайте команде, когда убедитесь в корректности.</td></tr>
+  <tr><td>4. Постоянное управление</td><td>Использовать, проверять, обновлять</td><td>Устарело или неверно — обновляйте исходный актив, не плодите дубли. Используйте режим Analyse, чтобы увидеть, помогли ли найденные активы ответу.</td></tr>
+</table>
+<h4>Б. Личный OPC (один человек — несколько агентов)</h4>
+<p>Цепочка: Несколько IDE · Единый доступ → <b>Специализированные агенты</b> (исследование · разработка · ревью) → <b>Библиотека общих активов</b> → <b>Эстафета где угодно</b> (не нужно заново объяснять контекст).</p>
+<table>
+  <tr><th>Шаг</th><th>Суть</th><th>Практика</th></tr>
+  <tr><td>1. Подключите несколько IDE</td><td>Меняйте инструменты без потери контекста</td><td>Один прокси и личный ключ во всех ваших IDE; импортируйте исторические сессии и скиллы, сохраняя свой workflow.</td></tr>
+  <tr><td>2. Разделите агентов</td><td>Независимые роли, активы — по потребности</td><td>Создавайте агентов по обязанностям (исследование, разработка, тест, ревью); каждому — только активы его роли; общая память и скиллы могут разделяться несколькими агентами.</td></tr>
+  <tr><td>3. Эстафета между платформами</td><td>Плавное продолжение между IDE и агентами</td><td>Выводы исследования пишите в память — агент разработки вспомнит их в другой IDE; методики тестирования превращайте в скиллы. Передача работы — через общие активы, а не копирование целых чатов.</td></tr>
+  <tr><td>4. Сопровождение активов</td><td>Держите полезное, чистите шум</td><td>Храните обоснования, рабочие решения, причины провалов и способы проверки; устаревшие факты обновляйте; не сохраняйте светскую болтовню, догадки, ключи и личные чувствительные данные.</td></tr>
+</table>
+
+<h3 id="s5-4">Команды mem: — прямо в диалоге</h3>
+<p>Когда память подключена, команды вводятся прямо в чате с агентом. Формат — <code>mem:&lt;команда&gt;</code>, без пробела после двоеточия; имена регистронезависимы.</p>
+<table>
+  <tr><th>Команда</th><th>Что делает</th></tr>
+  <tr><td><code>mem:help</code></td><td>Показать справку по всем командам mem:</td></tr>
+  <tr><td><code>mem:session-reset</code></td><td>Сбросить привязки команды / агента / задачи этой сессии и сразу заново открыть выбор</td></tr>
+  <tr><td><code>mem:sync</code></td><td>Обновить все внедрения активов этой сессии (скилл / память / знания / описания задачи и агента)</td></tr>
+  <tr><td><code>mem:create-skill [промпт]</code></td><td>Архивировать этот диалог как скилл (извлечение асинхронное); дописывает промпт для фокусировки на главном</td></tr>
+  <tr><td><code>mem:create-task [название]</code></td><td>Создать задачу из контекста текущего диалога и привязать к сессии. Без аргумента — агент сам выведет название и описание; с аргументом — аргумент станет названием (до 40 символов). Если к сессии уже привязана задача — вернётся предпросмотр новой для подтверждения</td></tr>
+  <tr><td><code>mem:create-task confirm</code> / <code>cancel</code></td><td>Перезаписать привязку и создать новую задачу / отменить без изменений</td></tr>
+  <tr><td><code>mem:update-task [описание]</code> <span class="badge ok">рекомендуется</span></td><td>Обновить описание привязанной задачи (продолжать переиспользовать её, а не плодить новые). Без аргумента — агент сравнит описание с недавним диалогом; идемпотично. Если задача не привязана — попросит сначала mem:create-task</td></tr>
+  <tr><td><code>mem:update-task confirm</code> / <code>cancel</code></td><td>Подтвердить обновление описания / отменить</td></tr>
+</table>
+<details class="fold"><summary>Примеры набора команд (копируются в панели всеми сразу)</summary><div class="inner">
+<pre><code>mem:sync
+mem:create-skill Суммируй шаги миграции БД и подводные камни
+mem:create-task Рефакторинг SessionRegistrar
+mem:create-task confirm
+mem:create-task cancel
+mem:update-task Добавь сегодняшний прогресс и оставшиеся риски
+mem:update-task confirm
+mem:update-task cancel
+mem:session-reset
+mem:help</code></pre>
+</div></details>
+
+<h3 id="s5-5">Повтор вводного гайда</h3>
+<p>Внизу страницы руководства есть кнопка «Повторить гайд» — повторяет пошаговый гайд первого запуска, чтобы быстро вспомнить страницы и действия.</p>
+</section>
+
+<section id="s6" data-nav="6. Наши доработки (SIUSTDAM)">
+<h2><span class="num">6</span>Наши доработки (SIUSTDAM)</h2>
+<p class="lead">SIUSTDAM — отслеживаемая копия авторского репозитория, адаптированная под русский язык и наши правила использования. Всё «хорошее» — заслуга авторов; здесь — что и зачем изменили мы. Ветка <code>pilot-patches</code>, push на вендора отключён.</p>
+
+<h3 id="s6-1">Сводная таблица доработок</h3>
+<table>
+  <tr><th>Область</th><th>Что сделано</th><th>Детали</th></tr>
+  <tr><td><b>Русификация панели</b></td><td>Локаль ru-RU заполнена с 125 до 1626 ключей, исправлены полномыточные скобки, CJK-литералы</td><td>Коммиты <code>3802e17</code>, <code>d1094cb</code>, пересборка <code>3e22acd</code>; визуальная приёмка всех страниц пройдена</td></tr>
+  <tr><td><b>Русификация промптов</b></td><td>4 промпта ядра (L1-извлечение, дедуп, сцены L2, персона L3) + шаблоны auto-recall переведены; кириллица добавлена в разрешённые символы имён сцен</td><td>Коммиты <code>378ed26</code>, <code>59a1abe</code>, <code>8f14a94</code>; в памяти — ноль CJK</td></tr>
+  <tr><td><b>Токенизация русского</b></td><td>Snowball-стеммер на обеих сторонах (индекс и запрос); jieba — только при иероглифах</td><td><code>tokenize.ts</code>, <code>ru-stemmer.ts</code>; живой пробник: «регламенту/регламенте» → «регламент»</td></tr>
+  <tr><td><b>Гибридный поиск</b></td><td>Включён векторный поиск; итог — FTS5 + векторы со слиянием</td><td>Рабочая машина: AITUNNEL 1536d; сервер: Ollama bge-m3 1024d (основной канал, решение 08.11.2026)</td></tr>
+  <tr><td><b>Командный режим</b></td><td><code>prompts.mode: "code"</code> — рабочие типы work_fact / work_task / work_method / work_artifact</td><td>Уроки из ошибок — общим каналом всех машин; включается машинно-зависимо</td></tr>
+  <tr><td><b>Подпись записей</b></td><td>Единое пространство, запрет неподписанных путей на шлюзе; recall/end с изоляцией пилот-патчем; дефолтные остатки вычищены</td><td>Решение 08.11.2026 (см. §2.8)</td></tr>
+  <tr><td><b>Развёртывание</b></td><td>Деплой-комплект <code>deploy/</code>, службы NSSM на сервере, Startup-ярлыки на рабочей, инструкция <code>doc/install_ru.md</code></td><td>5 служб с зависимостями и ротацией логов; чек-лист приёмки</td></tr>
+  <tr><td><b>Правки сборки/кода</b></td><td>Фикс сборки фронта под Windows (относительный <code>rollupOptions.input</code>); фронт-прокси панели подставляет Bearer сама (<code>63ef7f0</code>); все локальные клиенты под Bearer-гейт (memory.mjs, хуки, mcp-http, memory-web)</td><td>Ветка pilot-patches</td></tr>
+  <tr><td><b>Регламенты</b></td><td>Стандарт работы с памятью (§7), адаптеры для ZCode и dsh, SSH-доступ агента (переиспользуемый пакет)</td><td><code>doc/стандарт-работы-с-памятью.md</code> и соседние</td></tr>
+</table>
+
+<h3 id="s6-2">Машинные конфиги — разные намеренно</h3>
+<div class="warn"><b>Важно.</b> У рабочей машины и сервера свои gateway-config.yaml (разные провайдеры эмбеддингов: 1536d против 1024d). Конфиги машин в репозиторий не коммитятся; подмена конфига сломает векторный поиск по накопленным векторам. Скрипт раскладки <code>sync-to-tdam.cmd</code> учитывает это: существующий конфиг не трогает (перезапись — только <code>--force-config</code>).</div>
+
+<h3 id="s6-3">Границы: что НЕ трогаем</h3>
+<ul>
+  <li>Свои правки авторам не отправляем (поток исходящий закрыт); обновления вендора принимаем по журналу отличий.</li>
+  <li>Китайская ветка jieba остаётся как спящий резерв: модуль загружается при первом токен-вызове (без своей нативной библиотеки процесс падает — поэтому и нужен VC++ Redistributable). Вырезание — отдельная правка форка: локально, с проверкой, потом на сервер.</li>
+  <li>Смена модели эмбеддингов — только после корпусного замера (полный пере-эмбеддинг).</li>
+</ul>
+</section>
+
+<section id="s7" data-nav="7. Правила работы с памятью">
+<h2><span class="num">7</span>Правила работы с памятью (регламент)</h2>
+<p class="lead">Эталон — «Стандарт работы агента с командной памятью» (принят 04.11.2026, дополнен 08.11.2026). Адаптер для ZCode живёт в AGENTS.md. Ниже — суть.</p>
+
+<h3 id="s7-1">Принципы</h3>
+<ul>
+  <li><b>Гигиена сигнала:</b> ошибки и разобранные причины значимы, успехи — шум. Лучше не записать, чем записать лишнее.</li>
+  <li><b>Автономность:</b> пользователь не должен напоминать о памяти — обращение к ней рефлекс агента.</li>
+  <li><b>Видимость:</b> при любом обращении к памяти агент сообщает одной строкой, что сделано: <code>[память: искал «…» → N записей]</code> или <code>[память: записал «…»]</code>. Без обращения строка не пишется.</li>
+  <li><b>Прямая команда безусловна:</b> «вспомни», «поищи в памяти», «запиши», «зафиксируй» — выполнять всегда.</li>
+  <li><b>Подпись:</b> запись без владельца запрещена; идентификаторы агент берёт из конфига канала.</li>
+</ul>
+
+<h3 id="s7-2">Когда искать и когда записывать</h3>
+<div class="cols2">
+<div>
+<h4>Искать перед ответом, если тема рабочая</h4>
+<ul>
+  <li>вопрос касается рабочих проектов, инфраструктуры, памяти TDAM;</li>
+  <li>вопрос про прошлое: «как мы делали X?», «что решили про Y?», «мы это обсуждали?»;</li>
+  <li>предстоит решение, которое могло уже приниматься.</li>
+</ul>
+<p class="muted small">Не искать по общим вопросам вне рабочего контекста — это шум и лишние токены.</p>
+</div>
+<div>
+<h4>Записывать по своей инициативе</h4>
+<ul>
+  <li>разобранные <b>причины</b> сбоев (главная ценность);</li>
+  <li>принятые <b>решения</b> и обоснования;</li>
+  <li><b>устойчивые факты</b> об инфраструктуре;</li>
+  <li>правила и регламенты, согласованные с заказчиком.</li>
+</ul>
+<p class="muted small">Не записывать: пересказ диалога, разовые мелочи, то, что уже в файлах проекта.</p>
+</div>
+</div>
+
+<h3 id="s7-3">Каналы в ZCode (различать)</h3>
+<table>
+  <tr><th>Канал</th><th>Как работает</th></tr>
+  <tr><td><b>Фон (автоматически)</b></td><td>Хуки приносят сводку на старте сессии и релевантные памятки на каждую реплику — видно в тексте промпта, не как вызов инструмента. При недоступном шлюзе тихо отступают (пустой вывод — норма).</td></tr>
+  <tr><td><b>Инструменты (видно в панели)</b></td><td>MCP-инструменты memory_search / memory_capture / memory_recall / conversation_search — либо CLI памяти, если MCP недоступен.</td></tr>
+</table>
+<p class="muted small">События хуков: SessionStart (сводка сцен), UserPromptSubmit (памятки на реплику), PostToolUseFailure (контур ошибок; успешные вызовы намеренно не пишутся). Клиентский журнал — <code>~\.zcode\v2\logs\&lt;дата&gt;.log</code>.</p>
+<div class="note"><b>Известное ограничение клиента:</b> плашка MCP в настройках ZCode может показывать красный индикатор и спиннер ~30 с при фактически работающем соединении (дефект клиента, issue zai-org/feedback#1334). Не полагаться на цвет индикатора — проверка фактическим вызовом.</div>
+</section>
+
+<section id="s8" data-nav="8. Эксплуатация">
+<h2><span class="num">8</span>Эксплуатация</h2>
+<p class="lead">Ежедневные проверки, управление службами, логи и обновление. Детали — 05-ЭКСПЛУАТАЦИЯ-И-ОБНОВЛЕНИЕ.md на сервере.</p>
+
+<h3 id="s8-1">Проверка здоровья</h3>
+<pre><code>curl.exe -sS -m 20 http://127.0.0.1:8420/health</code></pre>
+<p>Ожидается JSON со <code>"status":"ok"</code>, <code>"vectorStore":true</code>, <code>"embeddingService":true</code>, <code>"ftsAvailable":true</code>.</p>
+<pre><code>Get-Service TDAM*</code></pre>
+<p>Все шесть служб — Running: пять узлов памяти (TDAM-Ollama, TDAM-Gateway, TDAM-MCP, TDAM-Web, TDAM-Panel) плюс TDAM-Docs (страница документации). На рабочей машине — свой набор сервисов (лаунчеры идемпотентны, <code>node C:/TDAM/memory.mjs health</code>).</p>
+
+<h3 id="s8-2">Управление службами (сервер)</h3>
+<pre><code>nssm status TDAM-Gateway      # статус
+nssm restart TDAM-Gateway     # перезапуск узла
+nssm stop TDAM-Panel          # остановка (дети гаснут вместе со службой — проверено)
+nssm start TDAM-Panel
+nssm dump TDAM-Gateway        # полные настройки службы</code></pre>
+<p>Порядок при полном перезапуске: остановить верхние по зависимостям (Panel → Web → MCP → Gateway → Ollama), запустить в обратном порядке. Обычно достаточно <code>nssm restart</code> конкретной службы.</p>
+
+<h3 id="s8-3">Логи</h3>
+<table>
+  <tr><th>Где</th><th>Что</th></tr>
+  <tr><td><code>D:\TDAM\logs\&lt;служба&gt;-out/err.log</code></td><td>stdout/stderr служб, ротация 10 МБ</td></tr>
+  <tr><td><code>C:\TDAM\&lt;служба&gt;-*.log</code></td><td>Журналы запускалок (события «spawned/skip»)</td></tr>
+  <tr><td><code>C:\TDAM\gateway-out/err-&lt;штамп&gt;.log</code></td><td>Вывод конкретного запуска gateway</td></tr>
+</table>
+
+<h3 id="s8-4">Бэкапы (зона владельца)</h3>
+<p>Критичное для сохранности: <code>D:\TDAM\data</code> — сама память; <code>C:\TDAM\gateway.env</code> — единственное место с ключами; <code>D:\TDAM\ollama-models</code> — модели (восстановимы скачиванием); клон <code>D:\.LocalGit\SIUSTDAM</code> — код (восстановим из GitHub). Регламент и расписание — решает владелец.</p>
+
+<h3 id="s8-5">Известные ограничения</h3>
+<ul>
+  <li>Реальная перезагрузка сервера не проводилась (имитация холодного старта пройдена); проверить автозапуск после первой фактической перезагрузки.</li>
+  <li><code>npm install</code> в MemoryCore завершается кодом 1 (вендорский postinstall ссылается на отсутствующий openclaw-файл) — библиотеки встают полностью, на работу не влияет.</li>
+  <li>Vite :5173 — девелоперский сервер, для работы панели не нужен (вход через :8123) и на этой платформе некорректен.</li>
+</ul>
+</section>
+
+<section id="s9" data-nav="9. Находки и ловушки">
+<h2><span class="num">9</span>Находки и ловушки</h2>
+<p class="lead">Сводный список по ходу русификации и развёртывания (полные версии — НАХОДКИ.md рабочей папки и 07-НАХОДКИ-И-ЛОВУШКИ.md на сервере).</p>
+
+<h3 id="s9-1">Ключевые находки</h3>
+<table>
+  <tr><th>№</th><th>Находка</th><th>Статус</th></tr>
+  <tr><td>3</td><td>API-удаление не переписывает дневные jsonl-журналы — при чистках: API-удаление + физическая компакция при остановленном шлюзе</td><td>учтено</td></tr>
+  <tr><td>4</td><td>PostToolUseFailure фиксирует old_string/new_string целиком — риск утечки объёма в L0</td><td>к разбору (лимит длины)</td></tr>
+  <tr><td>5</td><td>/v2 требует и Bearer, и <code>x-tdai-service-id</code></td><td>учтено</td></tr>
+  <tr><td>7</td><td>Кириллица в правиле имён сцен — добавлена в разрешённые символы промпта</td><td>исправлено</td></tr>
+  <tr><td>8</td><td>Vite dev :5173 отдаёт сырой TSX — вход только через прод-сборку :8123</td><td>не блокирует работу</td></tr>
+  <tr><td>9</td><td>Сборка фронта падала на Windows: абсолютный путь в rollupOptions.input — заменён на относительный</td><td>исправлено</td></tr>
+  <tr><td>14</td><td>sync-to-tdam.cmd сломан по путям (<code>REPO=%~dp0</code> указывает на deploy\, а пути — на корень репо)</td><td>к починке; раскладка вручную</td></tr>
+  <tr><td>15</td><td>MemoryCore postinstall ссылается на отсутствующий openclaw-файл — npm install завершается кодом 1 при установленных библиотеках</td><td>к разбору</td></tr>
+  <tr><td>16</td><td>npm 11.20 не запускает install-скрипты зависимостей без разрешения (<code>npm install-scripts approve</code>)</td><td>учтено</td></tr>
+  <tr><td>17</td><td>Панельному узлу нужна четвёртая установка npm — в <code>MemoryPanel\</code></td><td>дополнить install_ru.md</td></tr>
+  <tr><td>18</td><td>Реестр инстансов панели <code>metadata-instances.json</code> — строго без BOM (иначе «invalid metadata instances config»)</td><td>дополнить инструкцию</td></tr>
+  <tr><td>19</td><td><code>Start-Process</code>-детач в запускалках гаснет через 15–40 с — службы держат процесс в переднем плане</td><td>применено в службах</td></tr>
+</table>
+
+<h3 id="s9-2">Ловушки окружения</h3>
+<ul>
+  <li><b>Большие загрузки обрываются</b> (~420 МБ): качать <code>curl.exe -L -C - --retry 20 --retry-delay 5</code> и сверять sha256; <code>Invoke-WebRequest</code> не возобновляет загрузку. Остановленная ssh-задача не убивает удалённый загрузчик — сначала убить процессы на сервере.</li>
+  <li><b>Распаковка больших архивов</b> — <code>tar.exe</code>, не <code>Expand-Archive</code>.</li>
+  <li><b>curl в PowerShell</b> — псевдоним Invoke-WebRequest; звать <code>curl.exe</code>. Старый системный curl 7.55.1 не знает <code>--retry-all-errors</code> — свежий ставится первым в PATH.</li>
+  <li><b>VC++ Redistributable</b> нужен нативному @node-rs/jieba (иначе «The specified module could not be found»).</li>
+  <li><b>node.exe в C:\TDAM</b> — запускалки ждут его там.</li>
+  <li><b>Процесс из ssh-сессии умирает с сессией</b>; постоянные процессы — только службами; отвязанный запуск — через WMI Win32_Process.Create.</li>
+  <li><b>PowerShell-файлы с кириллицей</b> — UTF-8 с BOM (PS 5.1 без BOM читает ANSI); на сервере принято ASCII-only. Не смешивать с утилитами Git Bash.</li>
+  <li><b>Проверка «без BOM»</b> — первые байты: 239,187,191 = BOM есть.</li>
+</ul>
+</section>
+
+<section id="s10" data-nav="10. Справочник: CLI, API, MCP">
+<h2><span class="num">10</span>Справочник: CLI, API, MCP</h2>
+<p class="lead">Рабочие команды для агентов и администратора.</p>
+
+<h3 id="s10-1">CLI памяти (memory.mjs)</h3>
+<pre><code>node C:/TDAM/memory.mjs health                 # живость шлюза
+node C:/TDAM/memory.mjs search "регламент"     # поиск по памяткам
+node C:/TDAM/memory.mjs capture "тема" "суть"  # записать
+node C:/TDAM/memory.mjs recall                 # сводка памяти (персона + сцены)
+node C:/TDAM/memory.mjs conv "текст"           # записать реплику диалога
+node C:/TDAM/memory.mjs end                    # принудительная дистилляция сессии</code></pre>
+<p class="muted small">Ручной канал агента: search перед рабочим вопросом, capture после содержательного обмена (см. §7).</p>
+
+<h3 id="s10-2">HTTP API шлюза</h3>
+<pre><code># здоровье (без ключа)
+curl http://SRV:8420/health
+
+# авторизованный запрос (Bearer; для /v2 добавить x-tdai-service-id)
+curl -H "Authorization: Bearer $TDAI_GATEWAY_API_KEY" \
+     -H "x-tdai-service-id: default" http://SRV:8420/v2/...
+
+# создание администратора панели (один раз при установке)
+curl -X POST "http://127.0.0.1:8420/v3/internal/meta/user/init-admin" \
+     -H "Content-Type: application/json" -H "x-tdai-service-id: default" \
+     -d "{\"username\":\"admin\"}"</code></pre>
+<p class="muted small">Полная документация API — в репозитории: MemoryCore/v3-api-memorycore-doc.md, MemoryPanel/panel-api-doc.md и соседние файлы.</p>
+
+<h3 id="s10-3">MCP (проверка живости)</h3>
+<pre><code>curl -X POST http://127.0.0.1:8900/mcp -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-03-26\",\"capabilities\":{},\"clientInfo\":{\"name\":\"probe\",\"version\":\"0\"}}}"</code></pre>
+<p class="muted small">Ожидается JSON с serverInfo. Инструменты: memory_search, memory_capture, memory_recall, conversation_search.</p>
+</section>
+
+<section id="s11" data-nav="11. Глоссарий">
+<h2><span class="num">11</span>Глоссарий</h2>
+<table>
+  <tr><th>Термин</th><th>Значение</th></tr>
+  <tr><td><b>TDAM / SIUSTDAM</b></td><td>TencentDB Agent Memory / наш форк с адаптациями (репозиторий dsv180/SIUSTDAM)</td></tr>
+  <tr><td><b>Gateway</b></td><td>Ядро памяти (:8420) — единственная точка записи, чтения и конвейера</td></tr>
+  <tr><td><b>Memory Hub</b></td><td>Веб-панель командной памяти (:8123)</td></tr>
+  <tr><td><b>Памятка (L1)</b></td><td>Атомарное знание: одно утверждение, один факт</td></tr>
+  <tr><td><b>Сцена (L2)</b></td><td>Тематический контейнер контекста («работа над X»)</td></tr>
+  <tr><td><b>Персона (L3)</b></td><td>Портрет пользователя: архетип, предпочтения, наблюдения</td></tr>
+  <tr><td><b>Экстракция</b></td><td>LLM-обработка сырых диалогов в структурированные знания</td></tr>
+  <tr><td><b>Дедуп / конфликт-детект</b></td><td>Слияние новых знаний со старыми без дублей (store/update/merge/skip)</td></tr>
+  <tr><td><b>Хук</b></td><td>Скрипт, который клиент запускает автоматически на событие (SessionStart и др.)</td></tr>
+  <tr><td><b>Стык C:\TDAM</b></td><td>Рабочий каталог скриптов и конфигов; внутри junction на клон репозитория</td></tr>
+  <tr><td><b>user_key</b></td><td>Ключ входа человека в панель; выдаётся администратором</td></tr>
+  <tr><td><b>Bearer-ключ шлюза</b></td><td>Служебный ключ API-доступа (TDAI_GATEWAY_API_KEY из gateway.env)</td></tr>
+  <tr><td><b>work_* типы</b></td><td>Командные типы памяток в режиме prompts.mode=code</td></tr>
+  <tr><td><b>«Мозг»</b></td><td>LLM, на которой работает экстракция (у нас deepseek-v4.1-flash через AITUNNEL)</td></tr>
+  <tr><td><b>[pilot-patch]</b></td><td>Наш локальный коммит поверх кода вендора в ветке pilot-patches</td></tr>
+</table>
+</section>
+
+<section id="s12" data-nav="12. Источники и ссылки">
+<h2><span class="num">12</span>Источники и ссылки</h2>
+<h3 id="s12-1">Живые сервисы</h3>
+<table>
+  <tr><th>Адрес</th><th>Что</th></tr>
+  <tr><td><code>http://127.0.0.1:8123</code></td><td>Панель Memory Hub (вход по user_key; кнопка «Руководство» — источник §5)</td></tr>
+  <tr><td><code>http://127.0.0.1:8777/tdam-srv-1-1-architecture.html</code></td><td>Интерактивная архитектурная схема развёртывания (Archify)</td></tr>
+  <tr><td><code>http://127.0.0.1:8901</code></td><td>Веб-вьюер памяти (read-only)</td></tr>
+  <tr><td><code>http://10.30.23.20:8788/</code></td><td><b>Эта документация онлайн</b> (служба TDAM-Docs на сервере; из пилотной подсети)</td></tr>
+  <tr><td><code>http://SRV-1-1:8420/health</code></td><td>Здоровье шлюза сервера (10.30.23.20, из пилотной подсети)</td></tr>
+</table>
+<h3 id="s12-2">Документы</h3>
+<ul>
+  <li>Репозиторий SIUSTDAM (<code>github.com/dsv180/SIUSTDAM</code>, ветка pilot-patches): README.md (русский перевод авторского README), doc/install_ru.md, doc/стандарт-работы-с-памятью.md, doc/правила-памяти-zcode.md, doc/правила-памяти-dsh.md, ИНСТРУКЦИЯ-АГЕНТУ-ОБНОВЛЕНИЕ-РЕПОЗИТОРИЯ.md.</li>
+  <li>Рабочая папка проекта: ОПИСАНИЕ-СИСТЕМЫ.md, СТАТУС-РАЗВЕРТЫВАНИЕ.md, НАХОДКИ.md, ПЛАН-РУСИФИКАЦИИ.md, развёртывание-на-сервере\TDAM-Документация (01–07 + README).</li>
+  <li>Сервер SRV-1-1: <code>D:\TDAM-Документация</code> — тот же комплект документации + architecture-srv-1-1.html.</li>
+  <li>API-документация вендора: MemoryCore/v3-api-memorycore-doc.md, MemoryPanel/panel-api-doc.md, MemoryProxy/v3-api-memoryproxy-doc.md.</li>
+</ul>
+<div class="tip"><b>О документе.</b> Составлен 2026-11-10 из: документации и README авторов (перевод включён в §1, §2.6, §5), руководства панели Memory Hub (§5 — все разделы), комплекта документации развёртывания (§3–§4, §8–§9) и регламентов (§7). Комплект самодостаточен и работает офлайн: index.html + папки «диаграммы» (схемы Archify) и «скриншоты». Хранится: рабочая папка проекта, отдельная папка в репозитории SIUSTDAM и на сервере в D:\TDAM-Документация\интерактивная-документация (раздаётся службой TDAM-Docs). Обновлять при изменении системы.</div>
+</section>
+
+<footer style="margin:50px 0 10px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:16px">
+TDAM · интерактивная документация · ред. 2 от 2026-11-10 · работает офлайн (index.html + диаграммы + скриншоты) · Спасибо авторам TencentDB Agent Memory за отличную систему.
+</footer>
+</div></main>
+</div>
+<button id="topBtn" title="Наверх">↑ Наверх</button>
+<script>
+(function(){
+  /* ── тема ── */
+  var html=document.documentElement;
+  try{var t=localStorage.getItem('tdam-doc-theme');if(t)html.setAttribute('data-theme',t);}catch(e){}
+  document.getElementById('themeBtn').onclick=function(){
+    var nt=html.getAttribute('data-theme')==='dark'?'light':'dark';
+    html.setAttribute('data-theme',nt);try{localStorage.setItem('tdam-doc-theme',nt);}catch(e){}
+  };
+  /* ── сборка навигации ── */
+  var toc=document.getElementById('toc');
+  var secs=document.querySelectorAll('section[id]');
+  var hi=0;
+  document.querySelectorAll('section h3').forEach(function(h){
+    if(!h.id){h.id='h-auto-'+(++hi);}
+  });
+  var idx=0;
+  secs.forEach(function(sec,i){
+    var d=document.createElement('details'); if(i===0)d.open=true;
+    var s=document.createElement('summary');
+    s.innerHTML='<span class="chev">▶</span>'+ (sec.getAttribute('data-nav')||sec.id);
+    d.appendChild(s);
+    var sub=document.createElement('div');sub.className='sub';
+    sec.querySelectorAll('h3').forEach(function(h){
+      var a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.replace(/#/g,'').trim();
+      sub.appendChild(a);
+    });
+    d.appendChild(sub);toc.appendChild(d);d.dataset.for=sec.id;
+    /* клик по разделу: свернутый — раскрыть и перейти к нему; развернутый — свернуть */
+    s.addEventListener('click',function(e){
+      e.preventDefault();
+      if(!d.open){ d.open=true; sec.scrollIntoView({behavior:'smooth',block:'start'}); }
+      else { d.open=false; }
+    });
+  });
+  /* логотип — на самый верх */
+  document.getElementById('logo').addEventListener('click',function(){
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+  /* scrollspy */
+  var links=Array.prototype.slice.call(toc.querySelectorAll('a'));
+  var byId={};links.forEach(function(a){var k=a.getAttribute('href').slice(1);(byId[k]=byId[k]||[]).push(a);});
+  function mark(id){
+    links.forEach(function(a){a.classList.remove('act');});
+    toc.querySelectorAll('summary').forEach(function(sm){sm.classList.remove('actsec');});
+    var det=toc.querySelector('details[data-for="'+id+'"]');
+    if(det)det.querySelector('summary').classList.add('actsec');
+    (byId[id]||[]).forEach(function(a){a.classList.add('act');
+      var dd=a.closest('details'); if(dd&&!dd.open)dd.open=true;});
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting)mark(e.target.id);});
+    },{rootMargin:'-15% 0px -70% 0px'});
+    secs.forEach(function(s){io.observe(s);});
+  }
+  /* ── поиск ── */
+  var idx=[],input=document.getElementById('search'),res=document.getElementById('searchres');
+  document.querySelectorAll('#main p, #main li, #main td, #main th, #main pre, #main h2, #main h3, #main .cap').forEach(function(el){
+    if(el.closest('svg'))return;
+    var sec=el.closest('section');
+    var secTitle=sec?(sec.getAttribute('data-nav')||sec.id):'Обзор';
+    var t=(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(t.length>25)idx.push({el:el,t:t,sec:secTitle,id:sec?sec.id:'top'});
+  });
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  input.addEventListener('input',function(){
+    var q=input.value.trim().toLowerCase();
+    if(q.length<2){res.style.display='none';res.innerHTML='';return;}
+    var hits=[];
+    for(var i=0;i<idx.length&&hits.length<25;i++){
+      var p=idx[i].t.toLowerCase().indexOf(q);
+      if(p>=0)hits.push({p:p,item:idx[i]});
+    }
+    res.innerHTML=hits.length?'':'<div class="sr muted">Ничего не найдено</div>';
+    hits.slice(0,15).forEach(function(h){
+      var st=Math.max(0,h.p-40);
+      var snip=esc(h.item.t.slice(st,st+150)).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<b>$1</b>');
+      var a=document.createElement('div');a.className='sr';
+      a.innerHTML='<span class="loc">'+esc(h.item.sec)+'</span>…'+snip+'…';
+      a.onclick=function(){
+        res.style.display='none';input.value='';
+        var el=h.item.el;
+        if(el.tagName==='PRE'||el.tagName==='H2'||el.tagName==='H3'){el.scrollIntoView({behavior:'smooth'});}
+        else{var hd=el.closest('h3,h2')||el;hd.scrollIntoView({behavior:'smooth'});}
+        var r=el.getBoundingClientRect();el.style.transition='background .3s';el.style.background='rgba(77,163,255,.15)';
+        setTimeout(function(){el.style.background='';},1400);
+      };
+      res.appendChild(a);
+    });
+    res.style.display='block';
+  });
+  document.addEventListener('click',function(e){if(!res.contains(e.target)&&e.target!==input)res.style.display='none';});
+  /* ── кнопки копирования ── */
+  document.querySelectorAll('pre').forEach(function(pre){
+    var b=document.createElement('button');b.className='copybtn';b.textContent='копировать';
+    b.onclick=function(){
+      var c=pre.querySelector('code');var txt=(c||pre).textContent;
+      navigator.clipboard.writeText(txt).then(function(){b.textContent='скопировано ✓';setTimeout(function(){b.textContent='копировать';},1500);});
+    };
+    pre.appendChild(b);
+  });
+  /* ── archify-схемы: авто-высота + тема хозяина ── */
+  function sendDiagTheme(fr){
+    try { fr.contentWindow.postMessage({ t:'archify-theme', theme: html.getAttribute('data-theme') }, '*'); } catch(e){}
+  }
+  window.addEventListener('message', function(e){
+    var d=e.data; if(!d||d.t!=='archify-height'||typeof d.h!=='number'||!isFinite(d.h))return;
+    var fr=document.querySelectorAll('iframe.diag');
+    for(var i=0;i<fr.length;i++){ if(fr[i].contentWindow===e.source){ fr[i].style.height=Math.ceil(d.h+2)+'px'; sendDiagTheme(fr[i]); } }
+  });
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    setTimeout(function(){ document.querySelectorAll('iframe.diag').forEach(sendDiagTheme); }, 60);
+  });
+  /* ── мобильное меню и наверх ── */
+  document.getElementById('sbToggle').onclick=function(){document.getElementById('sidebar').classList.toggle('open');};
+  var tb=document.getElementById('topBtn');
+  window.addEventListener('scroll',function(){tb.style.display=window.scrollY>700?'block':'none';});
+  tb.onclick=function(){window.scrollTo({top:0,behavior:'smooth'});};
+})();
+</script>
+</body>
+</html>
