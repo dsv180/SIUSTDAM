@@ -31,15 +31,20 @@ const AGENT = process.env.TDAI_AGENT_ID || FILE.agentId || "default";
 const SERVICE = process.env.TDAI_SERVICE_ID || FILE.serviceId || "default";
 const SESSION = `cli-${USER}-${new Date().toISOString().slice(0, 10)}-${randomUUID().slice(0, 8)}`;
 const KEY = process.env.TDAI_GATEWAY_API_KEY || FILE.gatewayApiKey || "";
-// v3-доступ: непустой Bearer + service-id; трио team/agent/user можно передавать заголовками.
+// v3-доступ: непустой Bearer + service-id. Изоляция (team/agent/user) — ТОЛЬКО
+// при явной настройке (env TDAI_* или поля tdai-memory.json): если заголовки не
+// заданы, шлюз применяет свои дефолты (TDAI_MCP_* / "default") — там живут
+// записи хуков и CLI. Произвольный user-id (имя пользователя Windows) уводит
+// запрос в пустой скоуп — проверено 2026-11-05.
 const HEAD = {
   "Content-Type": "application/json; charset=utf-8",
   ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}),
   "x-tdai-service-id": SERVICE,
-  "x-tdai-team-id": TEAM,
-  "x-tdai-agent-id": AGENT,
-  "x-tdai-user-id": USER,
 };
+const EXPLICIT_USER = process.env.TDAI_USER_ID || FILE.userId || "";
+if (TEAM !== "default") HEAD["x-tdai-team-id"] = TEAM;
+if (AGENT !== "default") HEAD["x-tdai-agent-id"] = AGENT;
+if (EXPLICIT_USER && EXPLICIT_USER !== "default") HEAD["x-tdai-user-id"] = EXPLICIT_USER;
 
 async function gw(pathName, body) {
   const res = await fetch(GW + pathName, {

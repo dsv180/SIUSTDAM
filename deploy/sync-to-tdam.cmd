@@ -16,7 +16,9 @@ rem Usage:
 rem   sync-to-tdam.cmd                 - update scripts; copy config only if missing
 rem   sync-to-tdam.cmd --force-config  - also overwrite the config with the repo variant
 
-set "REPO=%~dp0"
+set "DEPLOY=%~dp0"
+rem Скрипт лежит в deploy\; конфиг — на уровень выше (корень репо).
+for %%I in ("%DEPLOY%..") do set "REPO=%%~fI\"
 set "STYK=C:\TDAM"
 
 if not exist "%STYK%\" (
